@@ -28,7 +28,7 @@ import time
 
 GPIO.setmode(GPIO.BOARD)
 GPIO.setwarnings(False)
-ledPin = 18
+ledPin = 12
 GPIO.setup(ledPin, GPIO.OUT)
 
 continue_reading = True
