@@ -67,7 +67,7 @@ while continue_reading:
 
     # If we have the UID, continue
     if status == MIFAREReader.MI_OK:
-
+        print(uid)
         # Print UID
         print("Card read UID: %s,%s,%s,%s" % (uid[0], uid[1], uid[2], uid[3]))
 
@@ -84,6 +84,8 @@ while continue_reading:
         if status == MIFAREReader.MI_OK:
             MIFAREReader.MFRC522_Read(8)
             MIFAREReader.MFRC522_StopCrypto1()
+
+
             print("LED turning on.")
             GPIO.output(ledPin, GPIO.HIGH)
             time.sleep(2)
