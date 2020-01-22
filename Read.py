@@ -26,7 +26,7 @@ import MFRC522
 import signal
 import time
 
-ALLOWED_UID = [7, 155, 107, 64, 183]
+allowed = [[7, 155, 107, 64, 183]]
 GPIO.setmode(GPIO.BOARD)
 GPIO.setwarnings(False)
 ledPin = 12
@@ -68,8 +68,9 @@ while continue_reading:
 
     # If we have the UID, continue
     if status == MIFAREReader.MI_OK:
+
         # Print UID
-        print("Card read UID: %s,%s,%s,%s" % (uid[0], uid[1], uid[2], uid[3]))
+        print("Card read UID:" % uid)
 
         # This is the default key for authentication
         key = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]
@@ -85,7 +86,7 @@ while continue_reading:
             MIFAREReader.MFRC522_Read(8)
             MIFAREReader.MFRC522_StopCrypto1()
 
-            if uid == ALLOWED_UID:
+            if uid in allowed:
                 print("LED turning on.")
                 GPIO.output(ledPin, GPIO.HIGH)
                 time.sleep(2)
