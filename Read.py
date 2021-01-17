@@ -100,7 +100,6 @@ while continue_reading:
                 GPIO.output(ledPin, GPIO.LOW)
 
                 print("ENTRANCE!")
-                GPIO.cleanup()
             else:
                 print("BLOCKED!")
         else:
