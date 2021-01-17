@@ -10,7 +10,7 @@ print('Press Control + C to exit the program')
 
 LED_PIN = 18
 RELAY_PIN = 17
-REED_CONTACT_1_PIN=27
+REED_CONTACT_1_PIN = 27
 
 led = LED(LED_PIN)
 relay = OutputDevice(RELAY_PIN, active_high=False, initial_value=False)
