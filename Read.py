@@ -29,7 +29,7 @@ import time
 allowed = [[8, 155, 225, 64, 50], [7, 155, 107, 64, 183]]
 GPIO.setmode(GPIO.BOARD)
 GPIO.setwarnings(False)
-ledPin = 18
+ledPin = 12
 GPIO.setup(ledPin, GPIO.OUT)
 relayPin = 11
 GPIO.setup(relayPin, GPIO.OUT)
