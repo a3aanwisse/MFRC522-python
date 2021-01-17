@@ -19,23 +19,22 @@ def flash_light(amount):
     print('Test LED by flashing.')
     for x in range(amount):
         GPIO.output(ledPin, GPIO.HIGH)
-        time.sleep(.5)
+        time.sleep(.25)
         GPIO.output(ledPin, GPIO.LOW)
-        time.sleep(.5)
+        time.sleep(.25)
 
 
-# def switch_relay():
-#     print('Test Relay by opening and closing.')
-#     GPIO.output(relayPin, GPIO.LOW)
-#     time.sleep(.5)
-#     GPIO.output(relayPin, GPIO.HIGH)
+def switch_relay():
+    print('Test Relay by opening and closing.')
+    GPIO.output(relayPin, GPIO.LOW)
+    time.sleep(.5)
+    GPIO.output(relayPin, GPIO.HIGH)
 
 
 try:
     while True:
         flash_light(5)
-        time.sleep(10)
-        # switch_relay()
+        switch_relay()
 
 except KeyboardInterrupt:  # Stops program when "Control + C" is entered
     GPIO.cleanup()  # Turns OFF everything
