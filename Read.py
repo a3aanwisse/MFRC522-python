@@ -29,7 +29,7 @@ import time
 allowed = [[8, 155, 225, 64, 50], [7, 155, 107, 64, 183]]
 GPIO.setmode(GPIO.BOARD)
 GPIO.setwarnings(False)
-ledPin = 12
+ledPin = 18
 GPIO.setup(ledPin, GPIO.OUT)
 
 continue_reading = True
