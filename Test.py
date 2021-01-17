@@ -41,17 +41,26 @@ def flash_light(amount):
         led.off()
         time.sleep(.25)
 
-def reed_open(status):
+
+def initiate_reed_state():
+    if reed1.is_pressed:
+        reed_open()
+    else:
+        reed_closed()
+
+
+def reed_open():
     print('Read contact is open.')
 
 
-def reed_closed(status):
+def reed_closed():
     print('Read contact is closed.')
 
 try:
     set_relay(False)
     reed1.when_released = reed_open
     reed1.when_pressed = reed_closed
+    initiate_reed_state()
     while 1:
         flash_light(5)
         toggle_relay()
