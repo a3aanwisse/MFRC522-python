@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
-import RPi.GPIO as GPIO
+from gpiozero.pins.rpigpio import RPiGPIOFactory
 from gpiozero import LED
 import time
 
 print('Press Control + C to exit the program')
 
-ledPin = 12
+ledPin = 18
 led = LED(ledPin)
 
 # GPIO.setmode(GPIO.BOARD)  # the pin numbers refer to the board connector not the chip
