@@ -36,8 +36,10 @@ def toggle_relay():
 def flash_light(amount):
     print('Test LED by flashing.')
     for x in range(amount):
-        led.pulse()
-
+        led.on()
+        time.sleep(.25)
+        led.off()
+        time.sleep(.25)
 
 def reed_open(status):
     print('Read contact is open.')
