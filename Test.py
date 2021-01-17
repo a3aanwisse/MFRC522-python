@@ -1,40 +1,47 @@
 #!/usr/bin/env python
 
 import RPi.GPIO as GPIO
+from gpiozero import LED
 import time
 
 print('Press Control + C to exit the program')
 
-GPIO.setmode(GPIO.BOARD)  # the pin numbers refer to the board connector not the chip
-GPIO.setwarnings(False)
-
 ledPin = 12
-relayPin = 11
+led = LED(ledPin)
 
-GPIO.setup(ledPin, GPIO.OUT)
-GPIO.setup(relayPin, GPIO.OUT)
+# GPIO.setmode(GPIO.BOARD)  # the pin numbers refer to the board connector not the chip
+# GPIO.setwarnings(False)
+
+
+# relayPin = 11
+
+# GPIO.setup(ledPin, GPIO.OUT)
+# GPIO.setup(relayPin, GPIO.OUT)
 
 
 def flash_light(amount):
     print('Test LED by flashing.')
     for x in range(amount):
-        GPIO.output(ledPin, GPIO.HIGH)
+        led.on()
+        # GPIO.output(ledPin, GPIO.HIGH)
         time.sleep(.25)
-        GPIO.output(ledPin, GPIO.LOW)
+        led.off()
+        # GPIO.output(ledPin, GPIO.LOW)
         time.sleep(.25)
 
 
-def switch_relay():
-    print('Test Relay by opening and closing.')
-    GPIO.output(relayPin, GPIO.LOW)
-    time.sleep(.5)
-    GPIO.output(relayPin, GPIO.HIGH)
-    time.sleep(.5)
+# def switch_relay():
+#     print('Test Relay by opening and closing.')
+#     GPIO.output(relayPin, GPIO.LOW)
+#     time.sleep(.5)
+#     GPIO.output(relayPin, GPIO.HIGH)
+#     time.sleep(.5)
+
 
 try:
     while True:
         flash_light(5)
-        switch_relay()
+        # switch_relay()
 
 except KeyboardInterrupt:  # Stops program when "Control + C" is entered
     GPIO.cleanup()  # Turns OFF everything

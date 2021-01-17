@@ -1,3 +1,5 @@
-mfrc522
+mfrc522~=0.0.7
 RPi.GPIO==0.7.0
 -e git+https://github.com/lthiery/SPI-Py.git#egg=SPI-Py
+
+gpiozero~=1.5.1
