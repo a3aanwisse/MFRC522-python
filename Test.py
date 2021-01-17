@@ -29,7 +29,7 @@ def switch_relay():
     GPIO.output(relayPin, GPIO.LOW)
     time.sleep(.5)
     GPIO.output(relayPin, GPIO.HIGH)
-
+    time.sleep(.5)
 
 try:
     while True:
