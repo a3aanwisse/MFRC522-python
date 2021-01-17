@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import RPi.GPIO as GPIO
 from time import sleep
 from mfrc522 import SimpleMFRC522
 
@@ -12,4 +13,5 @@ try:
         print("ID: %s\nText: %s" % (id, text))
         sleep(5)
 except KeyboardInterrupt:
+    GPIO.cleanup()
     raise

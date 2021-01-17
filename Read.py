@@ -30,10 +30,12 @@ allowed = [[8, 155, 225, 64, 50], [7, 155, 107, 64, 183]]
 GPIO.setmode(GPIO.BOARD)
 GPIO.setwarnings(False)
 ledPin = 18
+relayPin = 17
+
 GPIO.setup(ledPin, GPIO.OUT)
+GPIO.setup(relayPin, GPIO.OUT)
 
 continue_reading = True
-
 
 # Capture SIGINT for cleanup when the script is aborted
 def end_read(signal, frame):
@@ -90,11 +92,16 @@ while continue_reading:
             if uid in allowed:
                 print("LED turning on.")
                 GPIO.output(ledPin, GPIO.HIGH)
+                print("Relay turning on and off.")
+                GPIO.output(relayPin, GPIO.LOW)
+                time.sleep(0.25)
+                GPIO.output(relayPin, GPIO.HIGH)
                 time.sleep(2)
                 print("LED turning off.")
                 GPIO.output(ledPin, GPIO.LOW)
 
                 print("ENTRANCE!")
+                GPIO.cleanup()
             else:
                 print("BLOCKED!")
         else:
