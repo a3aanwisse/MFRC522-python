@@ -21,13 +21,14 @@ def flash_light(amount):
         GPIO.output(ledPin, GPIO.HIGH)
         time.sleep(.5)
         GPIO.output(ledPin, GPIO.LOW)
+        time.sleep(.5)
 
 
-def switch_relay():
-    print('Test Relay by opening and closing.')
-    GPIO.output(relayPin, GPIO.LOW)
-    time.sleep(.5)
-    GPIO.output(relayPin, GPIO.HIGH)
+# def switch_relay():
+#     print('Test Relay by opening and closing.')
+#     GPIO.output(relayPin, GPIO.LOW)
+#     time.sleep(.5)
+#     GPIO.output(relayPin, GPIO.HIGH)
 
 
 try:
