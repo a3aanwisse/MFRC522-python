@@ -1,2 +1,3 @@
-RPi.GPIO==0.6.3
--e git+https://github.com/lthiery/SPI-Py.git#egg=spi-pi
+mfrc522
+RPi.GPIO==0.7.0
+-e git+https://github.com/lthiery/SPI-Py.git#egg=SPI-Py
