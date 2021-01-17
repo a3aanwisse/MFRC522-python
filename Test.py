@@ -24,7 +24,7 @@ def flash_light(amount):
 
 
 def switch_relay():
-    print('Test relay by opening and closing.')
+    print('Test Relay by opening and closing.')
     GPIO.output(relayPin, GPIO.LOW)
     time.sleep(.5)
     GPIO.output(relayPin, GPIO.HIGH)
@@ -34,7 +34,7 @@ try:
     while True:
         flash_light(5)
         time.sleep(10)
-        switch_relay()
+        # switch_relay()
 
 except KeyboardInterrupt:  # Stops program when "Control + C" is entered
     GPIO.cleanup()  # Turns OFF everything
