@@ -2,6 +2,7 @@
 
 from gpiozero import LED
 from gpiozero import OutputDevice
+from gpiozero import Button
 import time
 import sys
 
@@ -9,9 +10,11 @@ print('Press Control + C to exit the program')
 
 LED_PIN = 18
 RELAY_PIN = 17
+REED_CONTACT_1_PIN=27
 
 led = LED(LED_PIN)
 relay = OutputDevice(RELAY_PIN, active_high=False, initial_value=False)
+reed1 = Button(27)
 
 
 def set_relay(status):
@@ -33,16 +36,20 @@ def toggle_relay():
 def flash_light(amount):
     print('Test LED by flashing.')
     for x in range(amount):
-        led.on()
-        # GPIO.output(ledPin, GPIO.HIGH)
-        time.sleep(.25)
-        led.off()
-        # GPIO.output(ledPin, GPIO.LOW)
-        time.sleep(.25)
+        led.pulse()
 
+
+def reed_open(status):
+    print('Read contact is open.')
+
+
+def reed_closed(status):
+    print('Read contact is closed.')
 
 try:
     set_relay(False)
+    reed1.when_released = reed_open
+    reed1.when_pressed = reed_closed
     while 1:
         flash_light(5)
         toggle_relay()
