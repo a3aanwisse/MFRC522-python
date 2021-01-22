@@ -26,7 +26,7 @@ import MFRC522
 import signal
 import time
 
-allowed = [[8, 155, 225, 64, 50], [7, 155, 107, 64, 183],[54, 175, 183, 66, 108]]
+allowed = []
 GPIO.setmode(GPIO.BOARD)
 GPIO.setwarnings(False)
 ledPin = 12
@@ -36,12 +36,18 @@ GPIO.setup(relayPin, GPIO.OUT)
 
 continue_reading = True
 
+
 # Capture SIGINT for cleanup when the script is aborted
-def end_read(signal, frame):
+def end_read(received_signal, frame):
     global continue_reading
     print("Ctrl+C captured, ending read.")
     continue_reading = False
     GPIO.cleanup()
+
+
+def read_allowed_card_ids():
+    global allowed
+    allowed = [[8, 155, 225, 64, 50], [7, 155, 107, 64, 183], [54, 175, 183, 66, 108]]
 
 
 # Hook the SIGINT
@@ -53,6 +59,8 @@ MIFAREReader = MFRC522.MFRC522()
 # Welcome message
 print("Welcome to the MFRC522 data read example")
 print("Press Ctrl-C to stop.")
+
+read_allowed_card_ids
 
 # This loop keeps checking for chips. If one is near it will get the UID and authenticate
 while continue_reading:

@@ -1,0 +1,30 @@
+<html>
+<head>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"> </script>
+    <script type=text/javascript>
+        $(function() {
+            $("#light_on").click(function (event) {
+                turn_light('on');
+            }),
+            $("#light_off").click(function (event) {
+                turn_light('off');
+            })
+        });
+        function turn_light(status) {
+            $.ajax({
+               url: '/light/' + status,
+               type: 'PUT',
+               success: function(response) {
+                   $("#light_status").text(status);
+               }
+            });
+        }
+    </script>
+</head>
+<body>
+<h1>Light control</h1>
+    <p>Light status: <div id="light_status">unknown</div></p>
+    <input type="button" id="light_on" value="Turn light on" />
+    <input type="button" id="light_off" value="Turn light off" />
+</body>
+</html>

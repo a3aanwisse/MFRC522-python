@@ -56,6 +56,7 @@ def reed_open():
 def reed_closed():
     print('Read contact is closed.')
 
+
 try:
     set_relay(False)
     reed1.when_released = reed_open
