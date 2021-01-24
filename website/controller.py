@@ -40,7 +40,7 @@ MIFAREReader = MFRC522.MFRC522()
 
 def setup():
     global led, relay
-    led: LED = LED(LED_PIN)
+    led = LED(LED_PIN)
     relay = OutputDevice(RELAY_PIN, active_high=False, initial_value=False)
     start_listening()
 
