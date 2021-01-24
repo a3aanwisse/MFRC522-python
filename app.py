@@ -11,16 +11,6 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/status')
-def stats():
-    return render_template('status.html')
-
-
-@app.route('/hello/<name>')
-def hello(name):
-    return render_template('name.html', name=name)
-
-
 @app.route('/cards')
 def showCardIds():
     with open('valid_card_ids.txt', 'r') as file:
@@ -60,6 +50,11 @@ def switchLed(state):
 def toggleRelay():
     controller.toggle_relay()
     return 'ok', 204
+
+
+@app.route("/reed", methods=['PUT'])
+def readReed():
+    return controller.read_reed()
 
 
 if __name__ == '__main__':

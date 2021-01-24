@@ -21,27 +21,26 @@
 #    along with MFRC522-Python.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import mfrc522
 import time
-import signal
 from gpiozero import LED
 from gpiozero import OutputDevice
+from gpiozero import Button
 
 LED_PIN = 18
 RELAY_PIN = 17
+REED_CONTACT_1_PIN = 27
 
 continue_reading = True
-led = None
-relay = None
-allowed = [[8, 155, 225, 64, 50], [7, 155, 107, 64, 183], [54, 175, 183, 66, 108]]
-# Create an object of the class MFRC522
-# MIFAREReader = MFRC522.MFRC522()
+led: LED
+relay: OutputDevice
+reed1: Button
 
 
 def setup():
     global led, relay
     led = LED(LED_PIN)
     relay = OutputDevice(RELAY_PIN, active_high=False, initial_value=False)
+    setup_reed_contacts()
     # start_listening()
 
 
@@ -60,6 +59,26 @@ def toggle_relay():
     relay.toggle()
     time.sleep(.5)
     relay.toggle()
+
+
+def setup_reed_contacts():
+    global reed1
+    reed1 = Button(REED_CONTACT_1_PIN)
+    reed1.when_released = reed_open
+    reed1.when_pressed = reed_closed
+
+
+def read_reed_1():
+    print("Reading reed 1. Value: " + reed1.value)
+    return reed1.value
+
+
+def reed_open():
+    print('Read contact is open.')
+
+
+def reed_closed():
+    print('Read contact is closed.')
 
 
 # def start_listening():

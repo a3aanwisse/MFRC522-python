@@ -18,7 +18,7 @@ REED_CONTACT_1_PIN = 27
 
 led = LED(LED_PIN)
 relay = OutputDevice(RELAY_PIN, active_high=False, initial_value=False)
-reed1 = Button(27)
+reed1 = Button(REED_CONTACT_1_PIN)
 
 
 def run_io_tasks_in_parallel(tasks):
