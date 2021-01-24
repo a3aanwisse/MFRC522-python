@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import sys
+
 from concurrent.futures import ThreadPoolExecutor
 from time import sleep
 from RPi import GPIO
@@ -94,4 +96,5 @@ try:
 except KeyboardInterrupt:  # Stops program when "Control + C" is entered
     set_relay(False)
     GPIO.cleanup()
+    sys.exit(0)
     raise
