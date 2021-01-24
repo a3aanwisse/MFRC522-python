@@ -21,7 +21,7 @@
 #    along with MFRC522-Python.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# import MFRC522
+import mfrc522
 import time
 import signal
 from gpiozero import LED

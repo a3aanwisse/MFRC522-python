@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 
+import sys
+import time
+
+
+import RPi.GPIO as GPIO
+from mfrc522 import SimpleMFRC522
+from gpiozero import Button
 from gpiozero import LED
 from gpiozero import OutputDevice
-from gpiozero import Button
-import time
-import sys
 
 print('Press Control + C to exit the program')
 
@@ -49,6 +53,14 @@ def initiate_reed_state():
         reed_closed()
 
 
+def initiate_nfc_reader():
+    reader = SimpleMFRC522()
+    while 1:
+        id, text = reader.read()
+        print(id)
+        print(text)
+
+
 def reed_open():
     print('Read contact is open.')
 
@@ -62,10 +74,13 @@ try:
     reed1.when_released = reed_open
     reed1.when_pressed = reed_closed
     initiate_reed_state()
+    initiate_nfc_reader()
     while 1:
         flash_light(5)
         toggle_relay()
 
+
 except KeyboardInterrupt:  # Stops program when "Control + C" is entered
     set_relay(False)
     sys.exit(0)
+    GPIO.cleanup()
