@@ -22,7 +22,7 @@
 #
 
 import RPi.GPIO as GPIO
-from .. import MFRC522
+import MFRC522
 import time
 from gpiozero import LED
 from gpiozero import OutputDevice
