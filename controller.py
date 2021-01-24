@@ -70,7 +70,7 @@ def setup_reed_contacts():
 
 def read_reed_1():
     print("Reading reed 1. Value: " + str(reed1.value))
-    return reed1.value
+    return str(reed1.value)
 
 
 def reed_open():
