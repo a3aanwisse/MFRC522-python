@@ -59,5 +59,11 @@ def switchLed(state):
     return 'ok', 204
 
 
+@app.route("/relay/toggle>", methods=['PUT'])
+def toggleRelay():
+    controller.toggle_relay()
+    return 'ok', 204
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

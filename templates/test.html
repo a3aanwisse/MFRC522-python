@@ -8,7 +8,9 @@
             }),
             $("#led_off").click(function (event) {
                 switch_led('off');
-            })
+            }),
+            $("#toggle_relay").click(function (event) {
+                toggle_relay();            })
         });
         function switch_led(status) {
             $.ajax({
@@ -19,12 +21,26 @@
                }
             });
         }
+        function toggle_relay() {
+            $.ajax({
+               url: '/relay/toggle',
+               type: 'PUT',
+               success: function(response) {
+                   $("#relay_status").text('toggled');
+               }
+            });
+        }
     </script>
 </head>
 <body>
 <h1>Hardware test</h1>
-    <p>Led status: <div id="led_status">unknown</div></p>
-    <input type="button" id="led_on" value="Turn led on" />
-    <input type="button" id="led_off" value="Turn led off" />
+<h2>LED</h2>
+<p>Led status: <div id="led_status">unknown</div></p>
+<input type="button" id="led_on" value="Turn led on" />
+<input type="button" id="led_off" value="Turn led off" />
+<h2>Relay</h2>
+<p>Relay status: <div id="relay_status">unknown</div></p>
+<input type="button" id="relay_open" value="Open relay" />
+<input type="button" id="relay_close" value="Close relay" />
 </body>
 </html>
