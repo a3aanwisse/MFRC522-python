@@ -31,8 +31,8 @@ LED_PIN = 18
 RELAY_PIN = 17
 
 continue_reading = True
-led
-relay
+led = None
+relay = None
 allowed = [[8, 155, 225, 64, 50], [7, 155, 107, 64, 183], [54, 175, 183, 66, 108]]
 # Create an object of the class MFRC522
 MIFAREReader = MFRC522.MFRC522()
