@@ -54,7 +54,7 @@ def toggleRelay():
 
 @app.route("/reed", methods=['PUT'])
 def readReed():
-    return controller.read_reed()
+    return controller.read_reed_1()
 
 
 if __name__ == '__main__':
