@@ -1,13 +1,10 @@
 from flask import Flask, render_template
-import signal
 import controller
 
 app = Flask(__name__)
 
-# Hook the SIGINT
-signal.signal(signal.SIGINT, controller.end_read)
-controller.setup()
 
+controller.setup()
 
 @app.route('/')
 def index():
@@ -59,7 +56,7 @@ def switchLed(state):
     return 'ok', 204
 
 
-@app.route("/relay/toggle>", methods=['PUT'])
+@app.route("/relay/toggle", methods=['PUT'])
 def toggleRelay():
     controller.toggle_relay()
     return 'ok', 204

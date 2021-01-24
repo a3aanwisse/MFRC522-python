@@ -21,9 +21,9 @@
 #    along with MFRC522-Python.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import RPi.GPIO as GPIO
 import MFRC522
 import time
+import signal
 from gpiozero import LED
 from gpiozero import OutputDevice
 
@@ -42,15 +42,15 @@ def setup():
     global led, relay
     led = LED(LED_PIN)
     relay = OutputDevice(RELAY_PIN, active_high=False, initial_value=False)
+    signal.signal(signal.SIGINT, end_read)
     # start_listening()
 
 
 # Capture SIGINT for cleanup when the script is aborted
 def end_read(received_signal, frame):
-    global continue_reading
+    # global continue_reading
     print("Ctrl+C captured, ending read.")
-    continue_reading = False
-    GPIO.cleanup()
+    # continue_reading = False
 
 
 def switch_led_on():
