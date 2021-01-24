@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 
-import sys
-import time
-
 from concurrent.futures import ThreadPoolExecutor
+from time import sleep
+from RPi import GPIO
 from gpiozero import Button
 from gpiozero import LED
 from gpiozero import OutputDevice
@@ -39,7 +38,7 @@ def set_relay(status):
 def toggle_relay():
     print("Toggling relay")
     relay.toggle()
-    time.sleep(.5)
+    sleep(.5)
     relay.toggle()
 
 
@@ -47,9 +46,9 @@ def flash_light(amount):
     print('Test LED by flashing.')
     for x in range(amount):
         led.on()
-        time.sleep(.25)
+        sleep(.25)
         led.off()
-        time.sleep(.25)
+        sleep(.25)
 
 
 def initiate_reed_state():
@@ -62,9 +61,9 @@ def initiate_reed_state():
 def initiate_nfc_reader():
     reader = SimpleMFRC522()
     while 1:
-        id, text = reader.read()
-        print(id)
-        print(text)
+        tag_id, tag_text = reader.read()
+        print(tag_id)
+        print(tag_text)
 
 
 def reed_open():
@@ -76,7 +75,7 @@ def reed_closed():
 
 
 def test_io():
-    while 1:
+    while True:
         flash_light(5)
         toggle_relay()
 
@@ -94,5 +93,5 @@ try:
 
 except KeyboardInterrupt:  # Stops program when "Control + C" is entered
     set_relay(False)
-    sys.exit(0)
     GPIO.cleanup()
+    raise
