@@ -3,12 +3,11 @@
 import sys
 import time
 
-
-import RPi.GPIO as GPIO
-from mfrc522 import SimpleMFRC522
+from concurrent.futures import ThreadPoolExecutor
 from gpiozero import Button
 from gpiozero import LED
 from gpiozero import OutputDevice
+from mfrc522 import SimpleMFRC522
 
 print('Press Control + C to exit the program')
 
@@ -19,6 +18,13 @@ REED_CONTACT_1_PIN = 27
 led = LED(LED_PIN)
 relay = OutputDevice(RELAY_PIN, active_high=False, initial_value=False)
 reed1 = Button(27)
+
+
+def run_io_tasks_in_parallel(tasks):
+    with ThreadPoolExecutor() as executor:
+        running_tasks = [executor.submit(task) for task in tasks]
+        for running_task in running_tasks:
+            running_task.result()
 
 
 def set_relay(status):
@@ -69,15 +75,21 @@ def reed_closed():
     print('Read contact is closed.')
 
 
+def test_io():
+    while 1:
+        flash_light(5)
+        toggle_relay()
+
+
 try:
     set_relay(False)
     reed1.when_released = reed_open
     reed1.when_pressed = reed_closed
     initiate_reed_state()
-    initiate_nfc_reader()
-    while 1:
-        flash_light(5)
-        toggle_relay()
+    run_io_tasks_in_parallel([
+        lambda: initiate_nfc_reader(),
+        lambda: test_io(),
+    ])
 
 
 except KeyboardInterrupt:  # Stops program when "Control + C" is entered
