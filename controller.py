@@ -28,9 +28,6 @@ def setup():
     relay = OutputDevice(RELAY_PIN, active_high=False, initial_value=False)
     setup_reed_contacts()
     read_allowed_card_ids()
-    run_io_tasks_in_parallel([
-        lambda: start_listening()
-    ])
 
 
 def run_io_tasks_in_parallel(tasks):
@@ -105,7 +102,7 @@ def reed_2_closed():
 
 
 def start_listening():
-    print("Enable NFC reader")
+    print("Starting NFC reader")
     reader = SimpleMFRC522()
     while continue_reading:
         (tag_id, tag_text) = reader.read()
