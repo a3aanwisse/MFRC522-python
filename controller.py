@@ -6,6 +6,7 @@ from gpiozero import LED
 from gpiozero import OutputDevice
 from gpiozero import Button
 
+# BE AWARE, THESE ARE (G)PIOS
 LED_PIN = 18
 RELAY_PIN = 17
 REED_CONTACT_1_PIN = 27
