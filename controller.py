@@ -32,7 +32,7 @@ def setup():
 
 def read_allowed_card_ids():
     global allowed_card_ids
-    allowed_card_ids = [[8, 155, 225, 64, 50], [7, 155, 107, 64, 183], [54, 175, 183, 66, 108]]
+    allowed_card_ids = [864127531329]
 
 
 def switch_led_on():
