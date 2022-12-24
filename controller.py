@@ -47,11 +47,11 @@ def toggle_relay():
 def setup_reed_contacts():
     global reed1, reed2
     reed1 = Button(REED_CONTACT_1_PIN)
-    reed1.when_released = reed_open(1)
-    reed1.when_pressed = reed_closed(1)
+    reed1.when_released = reed_1_open
+    reed1.when_pressed = reed_1_closed
     reed2 = Button(REED_CONTACT_2_PIN)
-    reed2.when_released = reed_open(2)
-    reed2.when_pressed = reed_closed(2)
+    reed2.when_released = reed_2_open
+    reed2.when_pressed = reed_2_closed
 
 
 def read_reed_1():
@@ -68,14 +68,20 @@ def read_reed_2():
         return "closed"
 
 
-def reed_open(number):
-    print('Read contact ' + str(number) + ' is open.')
-    return None
+def reed_1_open():
+    print('Reed contact 1 is open.')
 
 
-def reed_closed(number):
-    print('Read contact ' + str(number) + ' is closed.')
-    return None
+def reed_1_closed():
+    print('Reed contact 1 is closed.')
+
+
+def reed_2_open():
+    print('Reed contact 2 is open.')
+
+
+def reed_2_closed():
+    print('Reed contact 2 is closed.')
 
 
 # def start_listening():
