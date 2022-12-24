@@ -3,9 +3,6 @@ import controller
 
 app = Flask(__name__)
 
-controller.setup()
-
-
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -63,5 +60,7 @@ def read_reed_2():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    controller.setup()
     controller.start_listening()
+    app.run(debug=True, host='0.0.0.0', port=5000)
+
