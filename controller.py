@@ -31,6 +31,7 @@ def setup():
 
 
 def read_allowed_card_ids():
+    print("Reading allowed card ids")
     global allowed_card_ids
     allowed_card_ids = [864127531329]
 
@@ -53,6 +54,7 @@ def toggle_relay():
 
 
 def setup_reed_contacts():
+    print("Setting up reed contacts")
     global reed1, reed2
     reed1 = Button(REED_CONTACT_1_PIN)
     reed1.when_released = reed_1_open
@@ -93,6 +95,7 @@ def reed_2_closed():
 
 
 def start_listening():
+    print("Enable NFC reader")
     reader = SimpleMFRC522()
     while continue_reading:
         (tag_id, tag_text) = reader.read()
