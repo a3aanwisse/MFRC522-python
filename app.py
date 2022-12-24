@@ -3,8 +3,8 @@ import controller
 
 app = Flask(__name__)
 
-
 controller.setup()
+
 
 @app.route('/')
 def index():
@@ -12,7 +12,7 @@ def index():
 
 
 @app.route('/cards')
-def showCardIds():
+def show_card_ids():
     with open('valid_card_ids.txt', 'r') as file:
         contents = file.readlines()
 
@@ -23,20 +23,20 @@ def showCardIds():
     return render_template('cards.html', data=contents)
 
 
-@app.route('/cards/<id>')
-def addNewCardId(id):
+@app.route('/cards/<card_id>')
+def add_new_card_id(card_id):
     with open('valid_card_ids.txt', 'a') as file:
-        file.write(id + '\n')
-    return render_template('newId.html', id=id)
+        file.write(card_id + '\n')
+    return render_template('newId.html', id=card_id)
 
 
 @app.route("/test")
 def led():
-    return render_template('test.html');
+    return render_template('test.html')
 
 
 @app.route("/led/<state>", methods=['PUT'])
-def switchLed(state):
+def switch_led(state):
     if state == 'on':
         controller.switch_led_on()
     elif state == 'off':
@@ -47,13 +47,13 @@ def switchLed(state):
 
 
 @app.route("/relay/toggle", methods=['PUT'])
-def toggleRelay():
+def toggle_relay():
     controller.toggle_relay()
     return 'ok', 204
 
 
 @app.route("/reed", methods=['PUT'])
-def readReed():
+def read_reed():
     return controller.read_reed_1()
 
 
