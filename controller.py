@@ -6,15 +6,17 @@ from gpiozero import LED
 from gpiozero import OutputDevice
 from gpiozero import Button
 
-# BE AWARE, THESE ARE (G)PIOS
+# BE AWARE, THESE ARE (G)PIOS, NOT PINS
 LED_PIN = 18
 RELAY_PIN = 17
 REED_CONTACT_1_PIN = 27
+REED_CONTACT_2_PIN = 5
 
 continue_reading = True
 led: LED
 relay: OutputDevice
 reed1: Button
+reed2: Button
 
 
 def setup():
@@ -43,10 +45,13 @@ def toggle_relay():
 
 
 def setup_reed_contacts():
-    global reed1
+    global reed1, reed2
     reed1 = Button(REED_CONTACT_1_PIN)
-    reed1.when_released = reed_open
-    reed1.when_pressed = reed_closed
+    reed1.when_released = reed_open(1)
+    reed1.when_pressed = reed_closed(1)
+    reed2 = Button(REED_CONTACT_2_PIN)
+    reed2.when_released = reed_open(2)
+    reed2.when_pressed = reed_closed(2)
 
 
 def read_reed_1():
@@ -56,12 +61,21 @@ def read_reed_1():
         return "closed"
 
 
-def reed_open():
-    print('Read contact is open.')
+def read_reed_2():
+    if reed2.value == 0:
+        return "open"
+    else:
+        return "closed"
 
 
-def reed_closed():
-    print('Read contact is closed.')
+def reed_open(number):
+    print('Read contact ' + number + ' is open.')
+    return 0
+
+
+def reed_closed(number):
+    print('Read contact ' + number + ' is closed.')
+    return 0
 
 
 # def start_listening():

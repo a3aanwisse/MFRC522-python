@@ -23,12 +23,19 @@ Pin layout based on [raspberry Pi 3 model B+](https://www.etechnophiles.com/rasp
 | 12            | GPIO 18  | Yellow | Y       |
 | 39            | Ground   | Grey   | Y       |
 
-## Reed
+## Reed 1
 
 | Raspberry Pin | Function | Color | Checked |
 |---------------|----------|-------|---------|
 | 13            | GPIO 27  | White | Y       |
 | 14            | Ground   | Black | Y       |
+
+## Reed 2
+
+| Raspberry Pin | Function | Color | Checked |
+|---------------|----------|-------|---------|
+| 29            | GPIO 5   | White | N       |
+| 30            | Ground   | Black | N       |
 
 ## Relay
 
