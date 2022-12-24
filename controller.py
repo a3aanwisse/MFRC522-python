@@ -2,6 +2,7 @@
 # -*- coding: utf8 -*-
 
 import time
+from concurrent.futures import ThreadPoolExecutor
 from gpiozero import LED
 from gpiozero import OutputDevice
 from gpiozero import Button
@@ -26,9 +27,15 @@ def setup():
     led = LED(LED_PIN)
     relay = OutputDevice(RELAY_PIN, active_high=False, initial_value=False)
     setup_reed_contacts()
-    read_allowed_card_ids()
-    start_listening()
+    run_io_tasks_in_parallel([
+        lambda: read_allowed_card_ids()
+    ])
 
+def run_io_tasks_in_parallel(tasks):
+    with ThreadPoolExecutor() as executor:
+        running_tasks = [executor.submit(task) for task in tasks]
+        for running_task in running_tasks:
+            running_task.result()
 
 def read_allowed_card_ids():
     print("Reading allowed card ids")
