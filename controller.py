@@ -27,15 +27,18 @@ def setup():
     led = LED(LED_PIN)
     relay = OutputDevice(RELAY_PIN, active_high=False, initial_value=False)
     setup_reed_contacts()
+    read_allowed_card_ids()
     run_io_tasks_in_parallel([
-        lambda: read_allowed_card_ids()
+        lambda: start_listening()
     ])
+
 
 def run_io_tasks_in_parallel(tasks):
     with ThreadPoolExecutor() as executor:
         running_tasks = [executor.submit(task) for task in tasks]
         for running_task in running_tasks:
             running_task.result()
+
 
 def read_allowed_card_ids():
     print("Reading allowed card ids")
