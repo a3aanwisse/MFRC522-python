@@ -63,7 +63,5 @@ def read_reed_2():
 
 
 if __name__ == '__main__':
-    controller.run_io_tasks_in_parallel([
-        lambda: app.run(debug=True, host='0.0.0.0', port=5000),
-        lambda: controller.start_listening()
-    ])
+    app.run(debug=True, host='0.0.0.0', port=5000)
+    controller.start_listening()
