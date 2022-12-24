@@ -102,9 +102,11 @@ def test_io():
 
 try:
     set_relay(False)
-    reed1.when_released = reed_open
-    reed1.when_pressed = reed_closed
+    reed1.when_released = reed_1_open
+    reed1.when_pressed = reed_1_closed
     initiate_reed_1_state()
+    reed2.when_released = reed_2_open
+    reed2.when_pressed = reed_2_closed
     initiate_reed_2_state()
     run_io_tasks_in_parallel([
         lambda: initiate_nfc_reader(),
