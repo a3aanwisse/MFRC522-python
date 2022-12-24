@@ -70,12 +70,12 @@ def read_reed_2():
 
 def reed_open(number):
     print('Read contact ' + str(number) + ' is open.')
-    return 0
+    return None
 
 
 def reed_closed(number):
     print('Read contact ' + str(number) + ' is closed.')
-    return 0
+    return None
 
 
 # def start_listening():
