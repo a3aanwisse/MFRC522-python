@@ -69,12 +69,12 @@ def read_reed_2():
 
 
 def reed_open(number):
-    print('Read contact ' + number + ' is open.')
+    print('Read contact ' + str(number) + ' is open.')
     return 0
 
 
 def reed_closed(number):
-    print('Read contact ' + number + ' is closed.')
+    print('Read contact ' + str(number) + ' is closed.')
     return 0
 
 
