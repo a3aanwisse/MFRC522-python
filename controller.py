@@ -12,7 +12,7 @@ from mfrc522 import SimpleMFRC522
 LED_PIN = 18
 RELAY_PIN = 17
 REED_CONTACT_1_PIN = 22
-REED_CONTACT_2_PIN = 21
+REED_CONTACT_2_PIN = 23
 
 continue_reading = True
 allowed_card_ids = []

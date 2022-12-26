@@ -34,7 +34,7 @@ Pin layout based on [raspberry Pi 3 model B+](https://www.etechnophiles.com/rasp
 
 | Raspberry Pin | Function | Color | Checked |
 |---------------|----------|-------|---------|
-| 29            | GPIO 21  | White | N       |
+| 29            | GPIO 23  | White | N       |
 | 30            | Ground   | Black | N       |
 
 ## Relay
