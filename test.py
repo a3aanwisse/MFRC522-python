@@ -6,19 +6,16 @@ from concurrent.futures import ThreadPoolExecutor
 from time import sleep
 from RPi import GPIO
 from gpiozero import Button
-from gpiozero import LED
 from gpiozero import OutputDevice
 from mfrc522 import SimpleMFRC522
 
 print('Press Control + C to exit the program')
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
-LED_PIN = 18
 RELAY_PIN = 17
 REED_CONTACT_1_PIN = 22
 REED_CONTACT_2_PIN = 23
 
-led = LED(LED_PIN)
 relay = OutputDevice(RELAY_PIN, active_high=False, initial_value=False)
 reed1 = Button(REED_CONTACT_1_PIN)
 reed2 = Button(REED_CONTACT_2_PIN)
@@ -45,15 +42,6 @@ def toggle_relay():
     relay.toggle()
     sleep(.5)
     relay.toggle()
-
-
-def flash_light(amount):
-    print('Test LED by flashing.')
-    for x in range(amount):
-        led.on()
-        sleep(.25)
-        led.off()
-        sleep(.25)
 
 
 def initiate_reed_1_state():
@@ -96,7 +84,6 @@ def reed_2_closed():
 
 def test_io():
     while True:
-        flash_light(5)
         toggle_relay()
 
 

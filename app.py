@@ -29,19 +29,8 @@ def add_new_card_id(card_id):
 
 
 @app.route("/test")
-def led():
+def test():
     return render_template('test.html')
-
-
-@app.route("/led/<state>", methods=['PUT'])
-def switch_led(state):
-    if state == 'on':
-        controller.switch_led_on()
-    elif state == 'off':
-        controller.switch_led_off()
-    else:
-        return 'bad request!', 400
-    return 'ok', 204
 
 
 @app.route("/relay/toggle", methods=['PUT'])
