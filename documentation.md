@@ -17,12 +17,6 @@ Pin layout based on [raspberry Pi 3 model B+](https://www.etechnophiles.com/rasp
 | RST      | 22            | GPIO 25   | Blue     | Blue           | Y       |
 | 3.3V     | 1             | 3.3V      | Red      | Orange / White | Y       | 
 
-## LED
-| Raspberry Pin | Function | Color  | Checked |
-|---------------|----------|--------|---------|
-| 12            | GPIO 18  | Yellow | Y       |
-| 39            | Ground   | Grey   | Y       |
-
 ## Reed 1
 
 | Raspberry Pin | Function | Color | Checked |
