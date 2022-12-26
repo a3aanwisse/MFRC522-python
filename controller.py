@@ -21,7 +21,7 @@ reed_open_door: Button
 
 def setup():
     global relay
-    relay = OutputDevice(RELAY_PIN, active_high=False, initial_value=False)
+    # relay = OutputDevice(RELAY_PIN, active_high=False, initial_value=False)
     setup_reed_contacts()
     read_allowed_card_ids()
 
@@ -40,10 +40,11 @@ def read_allowed_card_ids():
 
 
 def toggle_relay():
-    print("Toggling relay")
-    relay.toggle()
-    time.sleep(.5)
-    relay.toggle()
+    print("Relay disabled")
+    # print("Toggling relay")
+    # relay.toggle()
+    # time.sleep(.5)
+    # relay.toggle()
 
 
 def setup_reed_contacts():
