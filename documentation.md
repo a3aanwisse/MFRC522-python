@@ -6,16 +6,16 @@ Also see  [this website](https://pimylifeup.com/raspberry-pi-rfid-rc522/)
 
 Pin layout based on [raspberry Pi 3 model B+](https://www.etechnophiles.com/raspberry-pi-3-b-pinout-with-gpio-functions-schematic-and-specs-in-detail/)
 
-| RFID Pin | Raspberry Pin | Function | Color  | Checked |
-|----------|---------------|----------|--------|---------|
-| SDA      | 24            | CEO      | Purple | Y       |
-| SCK      | 23            | SCLK     | Brown  | Y       |
-| MOSI     | 19            | SPI MOSI | Green  | Y       |
-| MISO     | 21            | SPI MISO | Orange | Y       |
-| IRQ      | -             | -        | -      |         |
-| GnD      | 6             | Ground   | Black  | Y       |
-| RST      | 22            | GPIO 25  | Blue   | Y       |
-| 3.3V     | 1             | 3.3V     | Red    | Y       | 
+| RFID Pin | Raspberry Pin | Function  | Color RP | Color network  | Checked |
+|----------|---------------|-----------|----------|----------------|---------|
+| SDA      | 24            | CEO / CSO | Purple   | Blue / White   | Y       |
+| SCK      | 23            | SCLK      | Brown    | Brown          | Y       |
+| MOSI     | 19            | SPI MOSI  | Green    | Green          | Y       |
+| MISO     | 21            | SPI MISO  | Orange   | Orange         | Y       |
+| IRQ      | -             | -         | -        |                |         |
+| GnD      | 6             | Ground    | Black    | Green / White  | Y       |
+| RST      | 22            | GPIO 25   | Blue     | Blue           | Y       |
+| 3.3V     | 1             | 3.3V      | Red      | Orange / White | Y       | 
 
 ## LED
 | Raspberry Pin | Function | Color  | Checked |
@@ -27,14 +27,14 @@ Pin layout based on [raspberry Pi 3 model B+](https://www.etechnophiles.com/rasp
 
 | Raspberry Pin | Function | Color | Checked |
 |---------------|----------|-------|---------|
-| 13            | GPIO 27  | White | Y       |
+| 13            | GPIO 22  | White | Y       |
 | 14            | Ground   | Black | Y       |
 
 ## Reed 2
 
 | Raspberry Pin | Function | Color | Checked |
 |---------------|----------|-------|---------|
-| 29            | GPIO 5   | White | N       |
+| 29            | GPIO 21  | White | N       |
 | 30            | Ground   | Black | N       |
 
 ## Relay
