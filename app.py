@@ -39,14 +39,14 @@ def toggle_relay():
     return 'ok', 204
 
 
-@app.route("/reed1", methods=['PUT'])
-def read_reed_1():
-    return controller.read_reed_1()
+@app.route("/reed/closed-door", methods=['PUT'])
+def read_reed_closed_door():
+    return controller.read_reed_closed_door()
 
 
-@app.route("/reed2", methods=['PUT'])
-def read_reed_2():
-    return controller.read_reed_2()
+@app.route("/reed/open-door", methods=['PUT'])
+def read_reed_open_door():
+    return controller.read_reed_open_door()
 
 
 if __name__ == "__main__":

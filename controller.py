@@ -9,14 +9,14 @@ from mfrc522 import SimpleMFRC522
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
 RELAY_PIN = 17
-REED_CONTACT_1_PIN = 22
-REED_CONTACT_2_PIN = 23
+REED_CONTACT_CLOSED_DOOR_PIN = 22
+REED_CONTACT_OPEN_DOOR_PIN = 23
 
 continue_reading = True
 allowed_card_ids = []
 relay: OutputDevice
-reed1: Button
-reed2: Button
+reed_closed_door: Button
+reed_open_door: Button
 
 
 def setup():
@@ -48,43 +48,43 @@ def toggle_relay():
 
 def setup_reed_contacts():
     print("Setting up reed contacts")
-    global reed1, reed2
-    reed1 = Button(REED_CONTACT_1_PIN)
-    reed1.when_released = reed_1_open
-    reed1.when_pressed = reed_1_closed
-    reed2 = Button(REED_CONTACT_2_PIN)
-    reed2.when_released = reed_2_open
-    reed2.when_pressed = reed_2_closed
+    global reed_closed_door, reed_open_door
+    reed_closed_door = Button(REED_CONTACT_CLOSED_DOOR_PIN)
+    reed_closed_door.when_released = reed_closed_door_open
+    reed_closed_door.when_pressed = reed_closed_door_closed
+    reed_open_door = Button(REED_CONTACT_OPEN_DOOR_PIN)
+    reed_open_door.when_released = reed_open_door_open
+    reed_open_door.when_pressed = reed_open_door_closed
 
 
-def read_reed_1():
-    if reed1.value == 0:
-        return "open"
+def read_reed_closed_door():
+    if reed_closed_door.value == 0:
+        return "garage door is opening / open"
     else:
-        return "closed"
+        return "garage door is closed"
 
 
-def read_reed_2():
-    if reed2.value == 0:
-        return "open"
+def read_reed_open_door():
+    if reed_open_door.value == 0:
+        return "garage door is closing / closed"
     else:
-        return "closed"
+        return "garage door is fully open"
 
 
-def reed_1_open():
-    print('Reed contact 1 is open.')
+def reed_closed_door_open():
+    print('Closed door reed contact is open - garage door is opening/open.')
 
 
-def reed_1_closed():
-    print('Reed contact 1 is closed.')
+def reed_closed_door_closed():
+    print('Closed door reed contact is closed - garage door is closed.')
 
 
-def reed_2_open():
-    print('Reed contact 2 is open.')
+def reed_open_door_open():
+    print('Open door reed is open - garage door is closing/closed.')
 
 
-def reed_2_closed():
-    print('Reed contact 2 is closed.')
+def reed_open_door_closed():
+    print('Open door reed contact is door is closed - garage door is open.')
 
 
 def start_listening():

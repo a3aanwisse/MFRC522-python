@@ -22,21 +22,21 @@
                }
             });
         }
-        function read_reed_1() {
+        function read_reed_closed_door() {
             $.ajax({
-               url: '/reed1',
+               url: '/reed/closed-door',
                type: 'PUT',
                success: function(response) {
-                   $("#reed_status_1").text(response);
+                   $("#reed_status_closed_door").text(response);
                }
             });
         }
-        function read_reed_2() {
+        function read_reed_open_door() {
             $.ajax({
-               url: '/reed2',
+               url: '/reed/open-door',
                type: 'PUT',
                success: function(response) {
-                   $("#reed_status_2").text(response);
+                   $("#reed_status_open_door").text(response);
                }
             });
         }
@@ -47,11 +47,11 @@
 <h2>Relay</h2>
 <p>Status: <div id="relay_status">unknown</div></p>
 <input type="button" id="toggle_relay" value="Toggle relay" />
-<h2>Reed contact 1</h2>
-<p>Status: <div id="reed_status_1">unknown</div></p>
-<input type="button" id="read_reed_1" value="Read status of reed contact 1" />
-<h2>Reed contact 2</h2>
-<p>Status: <div id="reed_status_2">unknown</div></p>
-<input type="button" id="read_reed_2" value="Read status of reed contact 2" />
+<h2>Reed contact closed door</h2>
+<p>Status: <div id="reed_status_closed_door">unknown</div></p>
+<input type="button" id="read_reed_closed_door" value="Read status of closed door reed contact " />
+<h2>Reed contact open door</h2>
+<p>Status: <div id="reed_status_open_door">unknown</div></p>
+<input type="button" id="read_reed_open_door" value="Read status of open door reed contact" />
 </body>
 </html>
