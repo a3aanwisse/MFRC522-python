@@ -25,33 +25,39 @@ def index():
 
 
 @app.route('/cards')
+@auth.login_required
 def show_card_ids():
     return render_template('cards.html', data=controller.get_allowed_card_ids())
 
 
 @app.route('/cards/<card_id>', methods=['PUT'])
+@auth.login_required
 def add_new_card_id(card_id):
     controller.add_allowed_card_id(card_id)
     return show_card_ids()
 
 
 @app.route("/test")
+@auth.login_required
 def test():
     return render_template('test.html')
 
 
 @app.route('/relay/toggle', methods=['PUT'])
+@auth.login_required
 def toggle_relay():
     controller.toggle_relay()
     return 'ok', 204
 
 
 @app.route('/reed/closed-door', methods=['PUT'])
+@auth.login_required
 def read_reed_closed_door():
     return controller.read_reed_closed_door()
 
 
 @app.route('/reed/open-door', methods=['PUT'])
+@auth.login_required
 def read_reed_open_door():
     return controller.read_reed_open_door()
 
