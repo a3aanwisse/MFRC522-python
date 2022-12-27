@@ -39,7 +39,7 @@ def read_allowed_card_ids():
     with open(VALID_CARD_IDS_FILE, 'r') as file:
         global allowed_card_ids
         allowed_card_ids = file.read().splitlines()
-        print('Allowed card ids: ' + allowed_card_ids)
+        print('Allowed card ids: ' + str(allowed_card_ids))
 
 
 def get_allowed_card_ids():
@@ -47,8 +47,10 @@ def get_allowed_card_ids():
 
 
 def add_allowed_card_id(card_id):
+    card_id_str = str(card_id)
     with open(VALID_CARD_IDS_FILE, 'a') as file:
-        file.write(str(card_id + '\n'))
+        file.write(card_id_str + '\n')
+    print('Writing card id ' + card_id_str + ' to file ' + VALID_CARD_IDS_FILE)
     read_allowed_card_ids()
 
 
@@ -105,8 +107,9 @@ def start_listening():
     reader = SimpleMFRC522()
     while continue_reading:
         (tag_id, tag_text) = reader.read()
-        if str(tag_id) in allowed_card_ids:
-            print('ACCESS FOR CARD ' + str(tag_id))
+        tag_id_str = str(tag_id)
+        if tag_id_str in allowed_card_ids:
+            print('ACCESS FOR CARD ' + tag_id_str)
             toggle_relay()
         else:
-            print('ACCESS BLOCKED FOR CARD ' + str(tag_id))
+            print('ACCESS BLOCKED FOR CARD ' + tag_id_str)
