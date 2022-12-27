@@ -2,6 +2,7 @@
 # -*- coding: utf8 -*-
 
 import time
+import logging
 from concurrent.futures import ThreadPoolExecutor
 from gpiozero import OutputDevice
 from gpiozero import Button
@@ -35,11 +36,11 @@ def run_io_tasks_in_parallel(tasks):
 
 
 def read_allowed_card_ids():
-    print('Reading allowed card ids from ' + VALID_CARD_IDS_FILE)
+    logging.info('Reading allowed card ids from %s', VALID_CARD_IDS_FILE)
     with open(VALID_CARD_IDS_FILE, 'r') as file:
         global allowed_card_ids
         allowed_card_ids = file.read().splitlines()
-        print('Allowed card ids: ' + str(allowed_card_ids))
+        logging.info('Allowed card ids: %s', str(allowed_card_ids))
 
 
 def get_allowed_card_ids():
@@ -50,19 +51,19 @@ def add_allowed_card_id(card_id):
     card_id_str = str(card_id)
     with open(VALID_CARD_IDS_FILE, 'a') as file:
         file.write(card_id_str + '\n')
-    print('Writing card id ' + card_id_str + ' to file ' + VALID_CARD_IDS_FILE)
+    logging.info('Writing card id %s to file %s', card_id_str, VALID_CARD_IDS_FILE)
     read_allowed_card_ids()
 
 
 def toggle_relay():
-    print('Toggling relay')
+    logging.info('Toggling relay')
     relay.toggle()
     time.sleep(.5)
     relay.toggle()
 
 
 def setup_reed_contacts():
-    print('Setting up reed contacts')
+    logging.info('Setting up reed contacts')
     global reed_closed_door, reed_open_door
     reed_closed_door = Button(REED_CONTACT_CLOSED_DOOR_PIN)
     reed_closed_door.when_released = reed_closed_door_open
@@ -87,29 +88,29 @@ def read_reed_open_door():
 
 
 def reed_closed_door_open():
-    print('Closed door reed contact is open - garage door is opening/open.')
+    logging.info('Closed door reed contact is open - garage door is opening/open.')
 
 
 def reed_closed_door_closed():
-    print('Closed door reed contact is closed - garage door is closed.')
+    logging.info('Closed door reed contact is closed - garage door is closed.')
 
 
 def reed_open_door_open():
-    print('Open door reed is open - garage door is closing/closed.')
+    logging.info('Open door reed is open - garage door is closing/closed.')
 
 
 def reed_open_door_closed():
-    print('Open door reed contact is door is closed - garage door is open.')
+    logging.info('Open door reed contact is door is closed - garage door is open.')
 
 
 def start_listening():
-    print('Starting NFC reader')
+    logging.info('Starting NFC reader')
     reader = SimpleMFRC522()
     while continue_reading:
         (tag_id, tag_text) = reader.read()
         tag_id_str = str(tag_id)
         if tag_id_str in allowed_card_ids:
-            print('ACCESS FOR CARD ' + tag_id_str)
+            logging.info('ACCESS FOR CARD %s', tag_id_str)
             toggle_relay()
         else:
-            print('ACCESS BLOCKED FOR CARD ' + tag_id_str)
+            logging.info('ACCESS BLOCKED FOR CARD %s', tag_id_str)
