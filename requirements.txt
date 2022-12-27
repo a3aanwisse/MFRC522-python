@@ -4,3 +4,4 @@ RPi.GPIO==0.7.0
 
 gpiozero~=1.5.1
 Flask~=1.1.2
+flask_httpauth

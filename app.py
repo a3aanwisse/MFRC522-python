@@ -1,13 +1,27 @@
 from flask import Flask, render_template
+from flask_httpauth import HTTPBasicAuth
+from werkzeug.security import generate_password_hash, check_password_hash
 import threading
 import controller
 
 app = Flask(__name__)
+auth = HTTPBasicAuth()
+users = {
+    "admin": generate_password_hash("Secret")
+}
+
+
+@auth.verify_password
+def verify_password(username, password):
+    if username in users:
+        return check_password_hash(users.get(username), password)
+    return False
 
 
 @app.route('/')
+@auth.login_required
 def index():
-    return render_template('index.html')
+    return render_template('index.html', username=auth.username())
 
 
 @app.route('/cards')
@@ -46,10 +60,6 @@ if __name__ == '__main__':
     try:
         appThread = threading.Thread(target=lambda: app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False))
         appThread.start()
-    except KeyboardInterrupt:
-        app.logger.info('Program terminated manually!')
-        raise SystemExit
-    try:
         controller.setup()
         controller.start_listening()
     except KeyboardInterrupt:
