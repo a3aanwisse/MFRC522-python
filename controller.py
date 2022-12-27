@@ -39,6 +39,7 @@ def read_allowed_card_ids():
     with open(VALID_CARD_IDS_FILE, 'r') as file:
         global allowed_card_ids
         allowed_card_ids = file.read().splitlines()
+        print('Allowed card ids: ' + allowed_card_ids)
 
 
 def get_allowed_card_ids():
@@ -104,7 +105,6 @@ def start_listening():
     reader = SimpleMFRC522()
     while continue_reading:
         (tag_id, tag_text) = reader.read()
-        print(allowed_card_ids)
         if str(tag_id) in allowed_card_ids:
             print('ACCESS FOR CARD ' + str(tag_id))
             toggle_relay()
