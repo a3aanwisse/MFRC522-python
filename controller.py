@@ -46,8 +46,9 @@ def get_allowed_card_ids():
 
 
 def add_allowed_card_id(card_id):
-    with open(VALID_CARD_IDS, 'w') as file:
+    with open(VALID_CARD_IDS, 'a') as file:
         file.write(str(card_id) + '\n')
+    read_allowed_card_ids()
 
 
 def toggle_relay():
