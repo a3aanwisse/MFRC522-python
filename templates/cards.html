@@ -10,7 +10,8 @@
                    url: '/cards/' + new_card_id,
                    type: 'PUT',
                    success: function(response) {
-                       $("#new_card_id_result").text(response);
+                        $("#new_card_id").text('');
+                        $("#new_card_id_result").text('Added');
                    }
                 });
             })
