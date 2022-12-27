@@ -43,7 +43,11 @@ def read_reed_open_door():
 
 
 if __name__ == '__main__':
-    threading.Thread(target=lambda: app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)).start()
-    controller.setup()
-    controller.start_listening()
+    try:
+        threading.Thread(target=lambda: app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)).start()
+        controller.setup()
+        controller.start_listening()
+    except KeyboardInterrupt:
+        app.logger.info('Program terminated manually!')
+        raise SystemExit
 

@@ -22,6 +22,7 @@ reed_open_door: Button
 
 logging.basicConfig(level=logging.INFO)
 
+
 def setup():
     global relay
     relay = OutputDevice(RELAY_PIN, active_high=True, initial_value=False)
@@ -115,3 +116,4 @@ def start_listening():
             toggle_relay()
         else:
             logging.info('ACCESS BLOCKED FOR CARD %s', tag_id_str)
+
