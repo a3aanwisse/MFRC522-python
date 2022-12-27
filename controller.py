@@ -20,6 +20,7 @@ relay: OutputDevice
 reed_closed_door: Button
 reed_open_door: Button
 
+logging.basicConfig(level=logging.INFO)
 
 def setup():
     global relay
