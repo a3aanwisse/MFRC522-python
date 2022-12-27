@@ -11,6 +11,7 @@ from mfrc522 import SimpleMFRC522
 RELAY_PIN = 17
 REED_CONTACT_CLOSED_DOOR_PIN = 22
 REED_CONTACT_OPEN_DOOR_PIN = 23
+VALID_CARD_IDS = "valid_card_ids.txt"
 
 continue_reading = True
 allowed_card_ids = []
@@ -34,9 +35,10 @@ def run_io_tasks_in_parallel(tasks):
 
 
 def read_allowed_card_ids():
-    print("Reading allowed card ids")
-    global allowed_card_ids
-    allowed_card_ids = [864127531329, 32672268471, 46214235930, 418223950621]
+    print("Reading allowed card ids from " + VALID_CARD_IDS)
+    with open(VALID_CARD_IDS, 'r') as file:
+        global allowed_card_ids
+        allowed_card_ids = file.readlines()
 
 
 def xxx():
