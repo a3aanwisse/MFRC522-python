@@ -36,7 +36,7 @@ def run_io_tasks_in_parallel(tasks):
 def read_allowed_card_ids():
     print("Reading allowed card ids")
     global allowed_card_ids
-    allowed_card_ids = [864127531329]
+    allowed_card_ids = [864127531329, 32672268471, 46214235930, 418223950621]
 
 
 def toggle_relay():
