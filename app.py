@@ -46,6 +46,10 @@ if __name__ == '__main__':
     try:
         appThread = threading.Thread(target=lambda: app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False))
         appThread.start()
+    except KeyboardInterrupt:
+        app.logger.info('Program terminated manually!')
+        raise SystemExit
+    try:
         controller.setup()
         controller.start_listening()
     except KeyboardInterrupt:
