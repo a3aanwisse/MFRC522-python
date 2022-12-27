@@ -11,7 +11,7 @@ from mfrc522 import SimpleMFRC522
 RELAY_PIN = 17
 REED_CONTACT_CLOSED_DOOR_PIN = 22
 REED_CONTACT_OPEN_DOOR_PIN = 23
-VALID_CARD_IDS = "valid_card_ids.txt"
+VALID_CARD_IDS = 'valid_card_ids.txt'
 
 continue_reading = True
 allowed_card_ids = []
@@ -35,7 +35,7 @@ def run_io_tasks_in_parallel(tasks):
 
 
 def read_allowed_card_ids():
-    print("Reading allowed card ids from " + VALID_CARD_IDS)
+    print('Reading allowed card ids from ' + VALID_CARD_IDS)
     with open(VALID_CARD_IDS, 'r') as file:
         global allowed_card_ids
         allowed_card_ids = file.readlines()
@@ -47,18 +47,18 @@ def get_allowed_card_ids():
 
 def add_allowed_card_id(card_id):
     with open(VALID_CARD_IDS, 'w') as file:
-        file.write(str(card_id))
+        file.write(str(card_id) + '\n')
 
 
 def toggle_relay():
-    print("Toggling relay")
+    print('Toggling relay')
     relay.toggle()
     time.sleep(.5)
     relay.toggle()
 
 
 def setup_reed_contacts():
-    print("Setting up reed contacts")
+    print('Setting up reed contacts')
     global reed_closed_door, reed_open_door
     reed_closed_door = Button(REED_CONTACT_CLOSED_DOOR_PIN)
     reed_closed_door.when_released = reed_closed_door_open
@@ -70,16 +70,16 @@ def setup_reed_contacts():
 
 def read_reed_closed_door():
     if reed_closed_door.value == 0:
-        return "garage door is opening / open"
+        return 'garage door is opening / open'
     else:
-        return "garage door is closed"
+        return 'garage door is closed'
 
 
 def read_reed_open_door():
     if reed_open_door.value == 0:
-        return "garage door is closing / closed"
+        return 'garage door is closing / closed'
     else:
-        return "garage door is fully open"
+        return 'garage door is fully open'
 
 
 def reed_closed_door_open():
@@ -99,7 +99,7 @@ def reed_open_door_closed():
 
 
 def start_listening():
-    print("Starting NFC reader")
+    print('Starting NFC reader')
     reader = SimpleMFRC522()
     while continue_reading:
         (tag_id, tag_text) = reader.read()
@@ -108,6 +108,6 @@ def start_listening():
 
         if tag_id in allowed_card_ids:
             toggle_relay()
-            print("ACCESS!")
+            print('ACCESS!')
         else:
-            print("ACCESS BLOCKED!")
+            print('ACCESS BLOCKED!')

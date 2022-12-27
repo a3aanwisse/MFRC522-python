@@ -16,8 +16,7 @@ def show_card_ids():
 
 @app.route('/cards/<card_id>')
 def add_new_card_id(card_id):
-    with open('valid_card_ids.txt', 'a') as file:
-        file.write(card_id + '\n')
+    controller.add_allowed_card_id(card_id)
     return render_template('newId.html', id=card_id)
 
 
