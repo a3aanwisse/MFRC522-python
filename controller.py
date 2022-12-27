@@ -62,6 +62,7 @@ def toggle_relay():
     relay.toggle()
     time.sleep(.5)
     relay.toggle()
+    time.sleep(1.5)
 
 
 def setup_reed_contacts():
