@@ -105,7 +105,7 @@ def start_listening():
     while continue_reading:
         (tag_id, tag_text) = reader.read()
         print(allowed_card_ids)
-        if tag_id in allowed_card_ids:
+        if str(tag_id) in allowed_card_ids:
             print('ACCESS FOR CARD ' + str(tag_id))
             toggle_relay()
         else:
