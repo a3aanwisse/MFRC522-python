@@ -11,7 +11,7 @@ from mfrc522 import SimpleMFRC522
 RELAY_PIN = 17
 REED_CONTACT_CLOSED_DOOR_PIN = 22
 REED_CONTACT_OPEN_DOOR_PIN = 23
-VALID_CARD_IDS = 'valid_card_ids.txt'
+VALID_CARD_IDS_FILE = 'valid_card_ids.txt'
 
 continue_reading = True
 allowed_card_ids = []
@@ -35,8 +35,8 @@ def run_io_tasks_in_parallel(tasks):
 
 
 def read_allowed_card_ids():
-    print('Reading allowed card ids from ' + VALID_CARD_IDS)
-    with open(VALID_CARD_IDS, 'r') as file:
+    print('Reading allowed card ids from ' + VALID_CARD_IDS_FILE)
+    with open(VALID_CARD_IDS_FILE, 'r') as file:
         global allowed_card_ids
         allowed_card_ids = file.read().splitlines()
 
@@ -46,7 +46,7 @@ def get_allowed_card_ids():
 
 
 def add_allowed_card_id(card_id):
-    with open(VALID_CARD_IDS, 'a') as file:
+    with open(VALID_CARD_IDS_FILE, 'a') as file:
         file.write(str(card_id + '\n'))
     read_allowed_card_ids()
 
@@ -104,11 +104,9 @@ def start_listening():
     reader = SimpleMFRC522()
     while continue_reading:
         (tag_id, tag_text) = reader.read()
-        print(tag_id)
-        print(tag_text)
-
+        print(allowed_card_ids)
         if tag_id in allowed_card_ids:
+            print('ACCESS FOR CARD ' + tag_id)
             toggle_relay()
-            print('ACCESS!')
         else:
-            print('ACCESS BLOCKED!')
+            print('ACCESS BLOCKED FOR CARD ' + tag_id)
