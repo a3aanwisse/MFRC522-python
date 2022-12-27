@@ -1,8 +1,28 @@
 <html>
 <head>
     <link rel="stylesheet" href='/static/style.css' />
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"> </script>
+    <script type=text/javascript>
+        $(function() {
+            $("#submit_new_card_id").click(function (event) {
+                var new_card_id = $("#new_card_id").val();
+                $.ajax({
+                   url: '/cards/' + new_card_id,
+                   type: 'PUT',
+                   success: function(response) {
+                       $("#new_card_id_result").text(response);
+                   }
+                });
+            })
+        });
+    </script>
 </head>
 <body>
-Valid card ids: {{ data }}</h1>
+    <h1>Valid card ids: {{ data }}</h1>
+
+    <h2>Add card</h2>
+    <input type="text" id="new_card_id"/>
+    <input type="button" id="submit_new_card_id" />
+    <p><div id="new_card_id_result"></div></p>
 </body>
 </html>
