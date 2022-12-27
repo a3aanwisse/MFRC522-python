@@ -106,7 +106,7 @@ def start_listening():
         (tag_id, tag_text) = reader.read()
         print(allowed_card_ids)
         if tag_id in allowed_card_ids:
-            print('ACCESS FOR CARD ' + tag_id)
+            print('ACCESS FOR CARD ' + str(tag_id))
             toggle_relay()
         else:
-            print('ACCESS BLOCKED FOR CARD ' + tag_id)
+            print('ACCESS BLOCKED FOR CARD ' + str(tag_id))
