@@ -17,7 +17,7 @@ def show_card_ids():
 @app.route('/cards/<card_id>', methods=['PUT'])
 def add_new_card_id(card_id):
     controller.add_allowed_card_id(card_id)
-    return render_template('newId.html', id=card_id)
+    return show_card_ids()
 
 
 @app.route("/test")
