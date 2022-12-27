@@ -41,18 +41,13 @@ def read_allowed_card_ids():
         allowed_card_ids = file.readlines()
 
 
-def xxx():
-    with open('valid_card_ids.txt', 'r') as file:
-        contents = file.readlines()
-
-    allowed = [[8, 155, 225, 64, 50], [7, 155, 107, 64, 183], [54, 175, 183, 66, 108]]
-    with open('valid_card_ids2.txt', 'w') as file:
-        for uid in allowed:
-            file.write(str(uid))
-
-
 def get_allowed_card_ids():
     return allowed_card_ids
+
+
+def add_allowed_card_id(card_id):
+    with open(VALID_CARD_IDS, 'w') as file:
+        file.write(str(card_id))
 
 
 def toggle_relay():
