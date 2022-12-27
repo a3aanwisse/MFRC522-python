@@ -11,7 +11,7 @@ def index():
 
 @app.route('/cards')
 def show_card_ids():
-    return render_template('cards.html', data=controller.read_allowed_card_ids())
+    return render_template('cards.html', data=controller.get_allowed_card_ids())
 
 
 @app.route('/cards/<card_id>')

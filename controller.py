@@ -54,7 +54,6 @@ def get_allowed_card_ids():
 
 
 def toggle_relay():
-    # print("Relay disabled")
     print("Toggling relay")
     relay.toggle()
     time.sleep(.5)
