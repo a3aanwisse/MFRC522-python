@@ -39,6 +39,20 @@ def read_allowed_card_ids():
     allowed_card_ids = [864127531329, 32672268471, 46214235930, 418223950621]
 
 
+def xxx():
+    with open('valid_card_ids.txt', 'r') as file:
+        contents = file.readlines()
+
+    allowed = [[8, 155, 225, 64, 50], [7, 155, 107, 64, 183], [54, 175, 183, 66, 108]]
+    with open('valid_card_ids2.txt', 'w') as file:
+        for uid in allowed:
+            file.write(str(uid))
+
+
+def get_allowed_card_ids():
+    return allowed_card_ids
+
+
 def toggle_relay():
     # print("Relay disabled")
     print("Toggling relay")

@@ -11,14 +11,7 @@ def index():
 
 @app.route('/cards')
 def show_card_ids():
-    with open('valid_card_ids.txt', 'r') as file:
-        contents = file.readlines()
-
-    allowed = [[8, 155, 225, 64, 50], [7, 155, 107, 64, 183], [54, 175, 183, 66, 108]]
-    with open('valid_card_ids2.txt', 'w') as file:
-        for uid in allowed:
-            file.write(str(uid))
-    return render_template('cards.html', data=contents)
+    return render_template('cards.html', data=controller.read_allowed_card_ids())
 
 
 @app.route('/cards/<card_id>')
