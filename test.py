@@ -4,7 +4,9 @@ import sys
 
 from concurrent.futures import ThreadPoolExecutor
 from time import sleep
-from RPi import GPIO
+
+from fake_rpigpio.RPi import GPIO
+# from RPi import GPIO
 from gpiozero import Button
 from gpiozero import OutputDevice
 from mfrc522 import SimpleMFRC522
@@ -105,4 +107,3 @@ except KeyboardInterrupt:  # Stops program when "Control + C" is entered
     set_relay(False)
     GPIO.cleanup()
     sys.exit(0)
-    raise

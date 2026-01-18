@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
 
-import time
 import logging
+import time
 from concurrent.futures import ThreadPoolExecutor
-from gpiozero import OutputDevice
+
 from gpiozero import Button
+from gpiozero import OutputDevice
 from mfrc522 import SimpleMFRC522
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
@@ -117,4 +118,3 @@ def start_listening():
             toggle_relay()
         else:
             logging.info('ACCESS BLOCKED FOR CARD %s', tag_id_str)
-
