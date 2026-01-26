@@ -3,8 +3,6 @@
 # This script acts as a watchdog for the main Python application.
 # It allows the application to be restarted and updated remotely.
 
-export VALID_CARDS_FILE_PATH="/home/pi/valid_card_ids_2.txt"
-
 # Navigate to the script's directory to ensure correct relative paths
 cd "$(dirname "$0")"
 
