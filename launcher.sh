@@ -20,8 +20,7 @@ while true; do
         # Exit code 10 means: "Update and restart"
         echo "UPDATE: Application signaled for an update. Pulling latest code from git..."
         git pull
-        echo "UPDATE: Git pull complete. Restarting application in 2 seconds..."
-        sleep 2
+        echo "UPDATE: Git pull complete. Restarting application..."
     else
         # Any other exit code means a crash or a clean shutdown
         echo "INFO: Application exited with status $STATUS. Shutting down launcher."
