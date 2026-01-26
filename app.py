@@ -2,40 +2,46 @@ import dev_mocks
 import sys
 import os
 import configparser
+import logging
 
-# Set up mocks for development if '--dev' flag is present.
-IS_DEVELOPMENT = dev_mocks.setup_development_mode()
+# --- Basic Logging Configuration ---
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Set up mocks and get config path. This must be done before other imports.
+IS_DEVELOPMENT, CONFIG_FILE_PATH = dev_mocks.setup_development_mode()
 
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 import threading
 import controller
-import logging
 
 app = Flask(__name__)
 # A secret key is required for flashing messages
 app.secret_key = os.urandom(24)
 auth = HTTPBasicAuth()
 
-# --- Load Configuration from config.ini ---
+# --- Load Configuration from config file ---
 config = configparser.ConfigParser()
 users = {}
 try:
-    config.read('config.ini')
+    if not os.path.exists(CONFIG_FILE_PATH):
+        raise FileNotFoundError(f"Config file not found at '{CONFIG_FILE_PATH}'")
+        
+    config.read(CONFIG_FILE_PATH)
     username = config.get('credentials', 'username')
     password = config.get('credentials', 'password')
     users = {
         username: generate_password_hash(password)
     }
-    print("Successfully loaded credentials from config.ini")
+    logging.info(f"Successfully loaded credentials from {CONFIG_FILE_PATH}")
 except (configparser.NoSectionError, configparser.NoOptionError, FileNotFoundError) as e:
-    print(f"ERROR: Could not load credentials from config.ini: {e}")
-    print("Please ensure 'config.ini' exists and has a [credentials] section with 'username' and 'password'.")
+    logging.error(f"Could not load configuration from '{CONFIG_FILE_PATH}': {e}")
+    logging.error("Please provide a valid config file using the --config argument.")
     sys.exit(1)
 
 
-# Suppress Werkzeug development server warning
+# Suppress Werkzeug's default INFO and WARNING logs
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
@@ -63,9 +69,7 @@ def trigger_update():
     Shuts down the application with a special exit code.
     The launcher.sh script will detect this code, pull from git, and restart.
     """
-    app.logger.warning('Received update request. Exiting with update code...')
-    # We use os._exit() for an immediate, forceful exit of all threads.
-    # This is more abrupt than sys.exit() but necessary to kill the daemonized web server thread.
+    logging.warning('Received update request. Exiting with update code...')
     os._exit(EXIT_CODE_FOR_UPDATE)
 
 
@@ -129,17 +133,17 @@ if __name__ == '__main__':
         controller.setup(config)
 
         if not IS_DEVELOPMENT:
-            app.logger.info('Starting NFC listener on the Raspberry Pi.')
-            app.logger.info('To install production dependencies, run: pip install -r requirements.txt')
+            logging.info('Starting NFC listener on the Raspberry Pi.')
+            logging.info('To install production dependencies, run: pip install -r requirements.txt')
             controller.start_listening()
         else:
-            app.logger.info('Running in development mode. NFC listener is disabled.')
-            app.logger.info('To install development dependencies, run: pip install -r requirements-dev.txt')
+            logging.info('Running in development mode. NFC listener is disabled.')
+            logging.info('To install development dependencies, run: pip install -r requirements-dev.txt')
             app_thread.join()
 
     except KeyboardInterrupt:
-        app.logger.info('Program terminated manually!')
+        logging.info('Program terminated manually!')
         sys.exit(0) # Clean exit
     except Exception as e:
-        app.logger.error(f'An unexpected error occurred: {e}')
+        logging.error(f'An unexpected error occurred: {e}', exc_info=True)
         sys.exit(1) # Unclean exit

@@ -4,27 +4,34 @@ import argparse
 
 def setup_development_mode():
     """
-    Parses command-line arguments to detect a '--dev' flag.
+    Parses command-line arguments for development mode and config file path.
 
-    If the flag is present, this function will mock all Raspberry Pi-specific 
-    hardware libraries (RPi.GPIO, spidev, gpiozero) to allow the application 
-    to run on a non-Pi machine (like Windows or macOS) for development purposes.
+    If '--dev' is present, it mocks hardware libraries.
+    '--config' specifies the path to the config.ini file.
 
     Returns:
-        bool: True if the application is running in development mode, False otherwise.
+        (bool, str): A tuple containing the development mode status (True/False)
+                     and the path to the configuration file.
     """
     parser = argparse.ArgumentParser(
-        description='Run the main application with an optional development mode.'
+        description='Run the main application with optional development mode and config path.'
     )
     parser.add_argument(
         '--dev',
         action='store_true',
         help='Run in development mode with mocked hardware libraries.'
     )
-    # Use parse_known_args() to prevent conflicts with other libraries' arguments (e.g., Flask)
+    parser.add_argument(
+        '--config',
+        type=str,
+        default='config.ini',
+        help='Path to the configuration file (default: config.ini).'
+    )
+    
     args, _ = parser.parse_known_args()
 
     is_dev_mode = args.dev
+    config_path = args.config
 
     if is_dev_mode:
         print('--- RUNNING IN DEVELOPMENT MODE ---')
@@ -46,7 +53,7 @@ def setup_development_mode():
 
         except ImportError as e:
             print(f'\nERROR: A required mocking library is not installed: {e}')
-            print('Please ensure fake-rpi is installed (`pip install -r requirements.txt`).\n')
+            print('Please ensure fake-rpi is installed (`pip install -r requirements-dev.txt`).\n')
             sys.exit(1)
             
-    return is_dev_mode
+    return is_dev_mode, config_path
