@@ -28,14 +28,6 @@ log.setLevel(logging.ERROR)
 EXIT_CODE_FOR_UPDATE = 10
 
 
-def shutdown_server():
-    """Function to shut down the Werkzeug server."""
-    func = request.environ.get('werkzeug.server.shutdown')
-    if func is None:
-        raise RuntimeError('Not running with the Werkzeug Server')
-    func()
-
-
 @auth.verify_password
 def verify_password(username, password):
     if username in users:
@@ -49,16 +41,16 @@ def index():
     return render_template('index.html', username=auth.username())
 
 
-@app.route('/update', methods=['GET'])
+@app.route('/update', methods=['POST'])
 @auth.login_required
 def trigger_update():
     """
     Shuts down the application with a special exit code.
     The launcher.sh script will detect this code, pull from git, and restart.
     """
-    app.logger.warning('Received update request. Shutting down for update...')
-    shutdown_server()
-    return 'Shutting down for update...'
+    app.logger.warning('Received update request. Exiting with update code...')
+    # We exit the entire process. The launcher script will handle the rest.
+    sys.exit(EXIT_CODE_FOR_UPDATE)
 
 
 @app.route('/cards', methods=['GET', 'POST'])
@@ -112,9 +104,8 @@ def read_reed_open_door():
 
 if __name__ == '__main__':
     try:
-        # We need to run in debug mode to have access to the shutdown function
         app_thread = threading.Thread(
-            target=lambda: app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False))
+            target=lambda: app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False))
         app_thread.daemon = True
         app_thread.start()
 
@@ -134,6 +125,3 @@ if __name__ == '__main__':
     except Exception as e:
         app.logger.error(f'An unexpected error occurred: {e}')
         sys.exit(1) # Unclean exit
-
-    # This part is reached after shutdown_server() is called
-    sys.exit(EXIT_CODE_FOR_UPDATE)
