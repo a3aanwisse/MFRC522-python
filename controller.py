@@ -184,6 +184,9 @@ def reed_open_door_closed():
     logging.info('Open door reed contact is closed - garage door is open.')
     if door_open_timer and door_open_timer.is_alive():
         door_open_timer.cancel()
+        logging.info('Cancelling previous door open timer.')
+    
+    logging.info('Starting 30-second timer for door open notification.')
     door_open_timer = Timer(30, send_signal_notification)
     door_open_timer.start()
 
