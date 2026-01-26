@@ -2,10 +2,11 @@
 # -*- coding: utf8 -*-
 
 import logging
-import os
+import sys
 import re
 import subprocess
 import time
+import configparser
 from concurrent.futures import ThreadPoolExecutor
 from threading import Timer
 
@@ -18,12 +19,10 @@ RELAY_PIN = 17
 REED_CONTACT_CLOSED_DOOR_PIN = 22
 REED_CONTACT_OPEN_DOOR_PIN = 23
 
-VALID_CARDS_FILE = os.environ.get('VALID_CARDS_FILE_PATH', 'valid_card_ids.txt')
-
-# --- Signal Configuration ---
-SIGNAL_SENDER_NR = '+31600000000'
-# This number will receive alerts if the door is opened manually (user is unknown)
-DEFAULT_RECIPIENT_NR = '+31600000000' 
+# These will be set by the setup function from the config file
+VALID_CARDS_FILE = None
+SIGNAL_SENDER_NR = None
+DEFAULT_RECIPIENT_NR = None
 
 continue_reading = True
 allowed_cards = {}
@@ -32,11 +31,10 @@ last_used_phone_number = None
 relay: OutputDevice
 reed_closed_door: Button
 reed_open_door: Button
-door_open_timer: Timer = None  # Initialize with None to prevent NameError
+door_open_timer: Timer = None
 
 logging.basicConfig(level=logging.INFO)
 
-# Compile regex for E.164 phone number format validation
 PHONE_NUMBER_REGEX = re.compile(r'^\+[1-9]\d{1,14}$')
 
 
@@ -47,8 +45,20 @@ def is_valid_phone_number(phone_number):
     return PHONE_NUMBER_REGEX.match(phone_number) is not None
 
 
-def setup():
-    global relay
+def setup(config):
+    """Sets up the controller with the given configuration."""
+    global relay, VALID_CARDS_FILE, SIGNAL_SENDER_NR, DEFAULT_RECIPIENT_NR
+    
+    try:
+        VALID_CARDS_FILE = config.get('paths', 'valid_cards_file')
+        SIGNAL_SENDER_NR = config.get('signal', 'sender_number')
+        DEFAULT_RECIPIENT_NR = config.get('signal', 'default_recipient_number')
+        logging.info('Successfully loaded paths and signal config.')
+    except (configparser.NoSectionError, configparser.NoOptionError) as e:
+        logging.error(f'Could not read configuration from config.ini: {e}')
+        # Exit if critical configuration is missing
+        sys.exit(1)
+
     relay = OutputDevice(RELAY_PIN, active_high=True, initial_value=False)
     setup_reed_contacts()
     read_allowed_cards()
@@ -62,6 +72,10 @@ def run_io_tasks_in_parallel(tasks):
 
 
 def read_allowed_cards():
+    if not VALID_CARDS_FILE:
+        logging.error('VALID_CARDS_FILE path is not set. Cannot read allowed cards.')
+        return
+
     logging.info(f'Reading allowed cards from {VALID_CARDS_FILE}')
     global allowed_cards
     new_allowed_cards = {}
@@ -148,8 +162,6 @@ def read_reed_open_door():
 def reed_closed_door_open():
     global last_used_phone_number
     logging.info('Closed door reed contact is open - garage door is opening/open.')
-    # This event signifies the start of any opening action.
-    # We reset the last used number here to handle manual opens correctly.
     last_used_phone_number = None
     logging.info('Reset last used phone number due to new door opening event.')
 
@@ -188,7 +200,6 @@ def send_signal_notification():
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             logging.error(f'Failed to send Signal message: {e}')
     else:
-        # This case is unlikely if the timer is cancelled correctly, but good for safety.
         logging.warning('Door is no longer open; skipping notification.')
 
 

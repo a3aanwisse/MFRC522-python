@@ -1,6 +1,7 @@
 import dev_mocks
 import sys
 import os
+import configparser
 
 # Set up mocks for development if '--dev' flag is present.
 IS_DEVELOPMENT = dev_mocks.setup_development_mode()
@@ -16,9 +17,23 @@ app = Flask(__name__)
 # A secret key is required for flashing messages
 app.secret_key = os.urandom(24)
 auth = HTTPBasicAuth()
-users = {
-    'admin': generate_password_hash('Secret')
-}
+
+# --- Load Configuration from config.ini ---
+config = configparser.ConfigParser()
+users = {}
+try:
+    config.read('config.ini')
+    username = config.get('credentials', 'username')
+    password = config.get('credentials', 'password')
+    users = {
+        username: generate_password_hash(password)
+    }
+    print("Successfully loaded credentials from config.ini")
+except (configparser.NoSectionError, configparser.NoOptionError, FileNotFoundError) as e:
+    print(f"ERROR: Could not load credentials from config.ini: {e}")
+    print("Please ensure 'config.ini' exists and has a [credentials] section with 'username' and 'password'.")
+    sys.exit(1)
+
 
 # Suppress Werkzeug development server warning
 log = logging.getLogger('werkzeug')
@@ -49,7 +64,6 @@ def trigger_update():
     The launcher.sh script will detect this code, pull from git, and restart.
     """
     app.logger.warning('Received update request. Exiting with update code...')
-    # We exit the entire process. The launcher script will handle the rest.
     sys.exit(EXIT_CODE_FOR_UPDATE)
 
 
@@ -109,7 +123,8 @@ if __name__ == '__main__':
         app_thread.daemon = True
         app_thread.start()
 
-        controller.setup()
+        # Pass the loaded config object to the controller
+        controller.setup(config)
 
         if not IS_DEVELOPMENT:
             app.logger.info('Starting NFC listener on the Raspberry Pi.')
@@ -117,6 +132,7 @@ if __name__ == '__main__':
             controller.start_listening()
         else:
             app.logger.info('Running in development mode. NFC listener is disabled.')
+            app.logger.info('To install development dependencies, run: pip install -r requirements-dev.txt')
             app_thread.join()
 
     except KeyboardInterrupt:
