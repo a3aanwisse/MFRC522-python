@@ -1,11 +1,11 @@
-mfrc522-python == 0.0.7
-# On PI:
-#RPi.GPIO == 0.7.1
-# -e git+https://github.com/lthiery/SPI-Py.git#egg=SPI-Py
-gpiozero == 2.0.1
+# This file contains the production dependencies for the Raspberry Pi.
+# To install, run: pip install -r requirements.txt
 
-# --- Development/Mocking Libraries ---
-fake-rpi == 0.7.1
+mfrc522-python == 0.0.7
+gpiozero == 2.0.1
+# RPi.GPIO is usually pre-installed or installed as a dependency of gpiozero on Pi.
+# If not, uncomment the line below.
+# RPi.GPIO == 0.7.1
 
 # --- Frontend ---
 flask == 3.1.2

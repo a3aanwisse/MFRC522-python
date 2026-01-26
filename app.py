@@ -94,9 +94,11 @@ if __name__ == '__main__':
 
         if not IS_DEVELOPMENT:
             app.logger.info('Starting NFC listener on the Raspberry Pi.')
+            app.logger.info('To install production dependencies, run: pip install -r requirements.txt')
             controller.start_listening()
         else:
             app.logger.info('Running in development mode. NFC listener is disabled.')
+            app.logger.info('To install development dependencies, run: pip install -r requirements-dev.txt')
             app_thread.join()
 
     except KeyboardInterrupt:

@@ -1,0 +1,8 @@
+# This file contains all dependencies for local development.
+# It includes the production dependencies from requirements.txt, plus mocking libraries.
+# To install, run: pip install -r requirements-dev.txt
+
+-r requirements.txt
+
+# --- Development/Mocking Libraries ---
+fake-rpi == 0.7.1
