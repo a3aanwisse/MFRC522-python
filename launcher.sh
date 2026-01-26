@@ -11,7 +11,7 @@ cd "$(dirname "$0")"
 while true; do
     # Launch the Python application.
     # The config file is specified here for production deployment.
-    python3 app.py --config /home/pi/MFRC522-python/config.ini
+    python3 app.py --config /home/pi/config.ini
 
     # Capture the exit status of the Python script
     STATUS=$?
