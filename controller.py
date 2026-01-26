@@ -18,8 +18,6 @@ RELAY_PIN = 17
 REED_CONTACT_CLOSED_DOOR_PIN = 22
 REED_CONTACT_OPEN_DOOR_PIN = 23
 
-# The path to the card file is now configurable via an environment variable.
-# It defaults to 'valid_card_ids.txt' in the local directory if the variable is not set.
 VALID_CARDS_FILE = os.environ.get('VALID_CARDS_FILE_PATH', 'valid_card_ids.txt')
 
 # --- Signal Configuration ---
@@ -32,7 +30,7 @@ last_used_phone_number = None
 relay: OutputDevice
 reed_closed_door: Button
 reed_open_door: Button
-door_open_timer: Timer
+door_open_timer: Timer = None  # Initialize with None to prevent NameError
 
 logging.basicConfig(level=logging.INFO)
 
