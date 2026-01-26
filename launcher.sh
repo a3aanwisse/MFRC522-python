@@ -10,7 +10,7 @@ cd "$(dirname "$0")"
 while true; do
     # Launch the Python application
     # The '--dev' flag should NOT be used here as this is for production.
-    python app.py
+    python3 app.py
 
     # Capture the exit status of the Python script
     STATUS=$?
