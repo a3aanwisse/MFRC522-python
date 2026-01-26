@@ -1,4 +1,6 @@
 import dev_mocks
+import sys
+import os
 
 # Set up mocks for development if '--dev' flag is present.
 IS_DEVELOPMENT = dev_mocks.setup_development_mode()
@@ -8,7 +10,7 @@ from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 import threading
 import controller
-import os
+import logging
 
 app = Flask(__name__)
 # A secret key is required for flashing messages
@@ -17,6 +19,21 @@ auth = HTTPBasicAuth()
 users = {
     'admin': generate_password_hash('Secret')
 }
+
+# Suppress Werkzeug development server warning
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+
+# Special exit code to signal the launcher script to update and restart
+EXIT_CODE_FOR_UPDATE = 10
+
+
+def shutdown_server():
+    """Function to shut down the Werkzeug server."""
+    func = request.environ.get('werkzeug.server.shutdown')
+    if func is None:
+        raise RuntimeError('Not running with the Werkzeug Server')
+    func()
 
 
 @auth.verify_password
@@ -32,6 +49,18 @@ def index():
     return render_template('index.html', username=auth.username())
 
 
+@app.route('/update', methods=['GET'])
+@auth.login_required
+def trigger_update():
+    """
+    Shuts down the application with a special exit code.
+    The launcher.sh script will detect this code, pull from git, and restart.
+    """
+    app.logger.warning('Received update request. Shutting down for update...')
+    shutdown_server()
+    return 'Shutting down for update...'
+
+
 @app.route('/cards', methods=['GET', 'POST'])
 @auth.login_required
 def manage_cards():
@@ -42,7 +71,6 @@ def manage_cards():
         if not card_id or not phone_number:
             flash('Card ID and Phone Number are required.', 'error')
         else:
-            # Use the new, more accurate function name
             success = controller.add_allowed_card(card_id, phone_number)
             if success:
                 flash(f'Successfully added card {card_id}.', 'success')
@@ -53,7 +81,6 @@ def manage_cards():
 
         return redirect(url_for('manage_cards'))
 
-    # Use the new, more accurate function name
     cards = controller.get_allowed_cards()
     return render_template('cards.html', cards=cards)
 
@@ -85,8 +112,9 @@ def read_reed_open_door():
 
 if __name__ == '__main__':
     try:
+        # We need to run in debug mode to have access to the shutdown function
         app_thread = threading.Thread(
-            target=lambda: app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False))
+            target=lambda: app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False))
         app_thread.daemon = True
         app_thread.start()
 
@@ -98,9 +126,14 @@ if __name__ == '__main__':
             controller.start_listening()
         else:
             app.logger.info('Running in development mode. NFC listener is disabled.')
-            app.logger.info('To install development dependencies, run: pip install -r requirements-dev.txt')
             app_thread.join()
 
     except KeyboardInterrupt:
         app.logger.info('Program terminated manually!')
-        raise SystemExit
+        sys.exit(0) # Clean exit
+    except Exception as e:
+        app.logger.error(f'An unexpected error occurred: {e}')
+        sys.exit(1) # Unclean exit
+
+    # This part is reached after shutdown_server() is called
+    sys.exit(EXIT_CODE_FOR_UPDATE)
