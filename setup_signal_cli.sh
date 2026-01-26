@@ -37,8 +37,9 @@ echo "-------------------------"
 # --- Step 2: Find and Download the Latest signal-cli Release ---
 echo "[2/4] Finding the latest signal-cli version..."
 
-# Use GitHub API to find the latest release URL for the tar.gz file
-LATEST_URL=$(curl -s https://api.github.com/repos/AsamK/signal-cli/releases/latest | jq -r '.assets[] | select(.name | endswith(".tar.gz")) | .browser_download_url')
+# Use GitHub API to find the latest release URL for the tar.gz file.
+# Pipe to 'head -n 1' to ensure we only get one URL, even if the API returns multiple.
+LATEST_URL=$(curl -s https://api.github.com/repos/AsamK/signal-cli/releases/latest | jq -r '.assets[] | select(.name | endswith(".tar.gz")) | .browser_download_url' | head -n 1)
 
 if [ -z "$LATEST_URL" ]; then
     echo "ERROR: Could not find the latest signal-cli download URL. Please check the GitHub page manually."
@@ -49,11 +50,9 @@ FILENAME=$(basename "$LATEST_URL")
 echo "Downloading $FILENAME..."
 
 # --- DEBUGGING STEP ---
-# Print the URL we are about to download to see if it's valid.
 echo "Attempting to download from URL: $LATEST_URL"
 # --------------------
 
-# Removed -q flag to make the download process verbose and show progress.
 wget --show-progress "$LATEST_URL"
 
 # --- Step 3: Extract and Install ---
