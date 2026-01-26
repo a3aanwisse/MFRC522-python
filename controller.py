@@ -22,6 +22,8 @@ VALID_CARDS_FILE = os.environ.get('VALID_CARDS_FILE_PATH', 'valid_card_ids.txt')
 
 # --- Signal Configuration ---
 SIGNAL_SENDER_NR = '+31600000000'
+# This number will receive alerts if the door is opened manually (user is unknown)
+DEFAULT_RECIPIENT_NR = '+31600000000' 
 
 continue_reading = True
 allowed_cards = {}
@@ -144,7 +146,12 @@ def read_reed_open_door():
 
 
 def reed_closed_door_open():
+    global last_used_phone_number
     logging.info('Closed door reed contact is open - garage door is opening/open.')
+    # This event signifies the start of any opening action.
+    # We reset the last used number here to handle manual opens correctly.
+    last_used_phone_number = None
+    logging.info('Reset last used phone number due to new door opening event.')
 
 
 def reed_closed_door_closed():
@@ -164,19 +171,25 @@ def reed_open_door_open():
 
 
 def send_signal_notification():
-    global last_used_phone_number
-    if reed_open_door.is_pressed and last_used_phone_number:
-        logging.info(f'Sending Signal notification to {last_used_phone_number}.')
+    recipient = last_used_phone_number or DEFAULT_RECIPIENT_NR
+    
+    if not recipient:
+        logging.error('No recipient for door open notification; neither last user nor default is set.')
+        return
+
+    if reed_open_door.is_pressed:
+        logging.info(f'Sending Signal notification to {recipient}.')
         message = 'Warning: Garage door has been open for more than 30 seconds!'
         try:
             subprocess.run([
-                'signal-cli', '-u', SIGNAL_SENDER_NR, 'send', '-m', message, last_used_phone_number
+                'signal-cli', '-u', SIGNAL_SENDER_NR, 'send', '-m', message, recipient
             ], check=True)
             logging.info('Successfully sent Signal message.')
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             logging.error(f'Failed to send Signal message: {e}')
     else:
-        logging.warning('Door is no longer open or last user is unknown; skipping notification.')
+        # This case is unlikely if the timer is cancelled correctly, but good for safety.
+        logging.warning('Door is no longer open; skipping notification.')
 
 
 def reed_open_door_closed():
