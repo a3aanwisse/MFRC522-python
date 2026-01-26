@@ -47,7 +47,14 @@ fi
 
 FILENAME=$(basename "$LATEST_URL")
 echo "Downloading $FILENAME..."
-wget -q --show-progress "$LATEST_URL"
+
+# --- DEBUGGING STEP ---
+# Print the URL we are about to download to see if it's valid.
+echo "Attempting to download from URL: $LATEST_URL"
+# --------------------
+
+# Removed -q flag to make the download process verbose and show progress.
+wget --show-progress "$LATEST_URL"
 
 # --- Step 3: Extract and Install ---
 echo "[3/4] Installing signal-cli..."

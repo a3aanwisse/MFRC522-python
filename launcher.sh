@@ -21,7 +21,7 @@ while true; do
         # Exit code 10 means: "Update and restart"
         echo "UPDATE: Application signaled for an update. Pulling latest code from git..."
         git pull
-        echo "UPDATE: Git pull complete. Restarting the launcher to apply any updates to itself..."
+        echo "UPDATE: Git pull complete. Restarting the launcher to apply any updates to itself as well..."
         # Use exec to replace the current process with a new one from the updated file on disk.
         # This ensures that if launcher.sh itself was updated, the new version is used.
         exec ./launcher.sh
