@@ -10,7 +10,7 @@ cd "$(dirname "$0")"
 while true; do
     # Launch the Python application
     # The '--dev' flag should NOT be used here as this is for production.
-    python3 app.py
+    python3 app.py --config /home/pi/config.ini
 
     # Capture the exit status of the Python script
     STATUS=$?
