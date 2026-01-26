@@ -55,6 +55,9 @@ Pin layout based on [raspberry Pi 3 model B+](https://www.etechnophiles.com/rasp
 
 Updated via git on the pi
 
+## Installed in crontab:
+sudo crontab -e
+
 ## Run
 
 ```python3 app.py```

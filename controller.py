@@ -2,6 +2,7 @@
 # -*- coding: utf8 -*-
 
 import logging
+import os
 import re
 import subprocess
 import time
@@ -16,7 +17,10 @@ from mfrc522 import SimpleMFRC522
 RELAY_PIN = 17
 REED_CONTACT_CLOSED_DOOR_PIN = 22
 REED_CONTACT_OPEN_DOOR_PIN = 23
-VALID_CARD_IDS_FILE = 'valid_card_ids.txt'
+
+# The path to the card file is now configurable via an environment variable.
+# It defaults to 'valid_card_ids.txt' in the local directory if the variable is not set.
+VALID_CARDS_FILE = os.environ.get('VALID_CARDS_FILE_PATH', 'valid_card_ids.txt')
 
 # --- Signal Configuration ---
 SIGNAL_SENDER_NR = '+31600000000'
@@ -58,18 +62,18 @@ def run_io_tasks_in_parallel(tasks):
 
 
 def read_allowed_cards():
-    logging.info('Reading allowed cards from %s', VALID_CARD_IDS_FILE)
+    logging.info(f'Reading allowed cards from {VALID_CARDS_FILE}')
     global allowed_cards
     new_allowed_cards = {}
     try:
-        with open(VALID_CARD_IDS_FILE, 'r') as file:
+        with open(VALID_CARDS_FILE, 'r') as file:
             for i, line in enumerate(file, 1):
                 line = line.strip()
                 if not line or line.startswith('#'):
                     continue
 
                 if ',' not in line:
-                    logging.error(f'Invalid format on line {i} in {VALID_CARD_IDS_FILE}: Missing comma.')
+                    logging.error(f'Invalid format on line {i} in {VALID_CARDS_FILE}: Missing comma.')
                     continue
 
                 card_id, phone_number = [part.strip() for part in line.split(',', 1)]
@@ -86,7 +90,7 @@ def read_allowed_cards():
         allowed_cards = new_allowed_cards
         logging.info('Allowed cards loaded: %s', str(allowed_cards))
     except FileNotFoundError:
-        logging.error(f'Could not find {VALID_CARD_IDS_FILE}. No cards will be loaded.')
+        logging.error(f'Could not find {VALID_CARDS_FILE}. No cards will be loaded.')
         allowed_cards = {}
 
 
@@ -101,7 +105,7 @@ def add_allowed_card(card_id, phone_number):
         return False
 
     card_id_str = str(card_id)
-    with open(VALID_CARD_IDS_FILE, 'a') as file:
+    with open(VALID_CARDS_FILE, 'a') as file:
         file.write(f'\n{card_id_str},{phone_number}')
     logging.info(f'Writing card id {card_id_str} with phone {phone_number} to file.')
     read_allowed_cards()
