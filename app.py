@@ -64,7 +64,9 @@ def trigger_update():
     The launcher.sh script will detect this code, pull from git, and restart.
     """
     app.logger.warning('Received update request. Exiting with update code...')
-    sys.exit(EXIT_CODE_FOR_UPDATE)
+    # We use os._exit() for an immediate, forceful exit of all threads.
+    # This is more abrupt than sys.exit() but necessary to kill the daemonized web server thread.
+    os._exit(EXIT_CODE_FOR_UPDATE)
 
 
 @app.route('/cards', methods=['GET', 'POST'])
