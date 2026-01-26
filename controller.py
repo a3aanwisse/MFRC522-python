@@ -2,8 +2,11 @@
 # -*- coding: utf8 -*-
 
 import logging
+import re
+import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor
+from threading import Timer
 
 from gpiozero import Button
 from gpiozero import OutputDevice
@@ -15,20 +18,36 @@ REED_CONTACT_CLOSED_DOOR_PIN = 22
 REED_CONTACT_OPEN_DOOR_PIN = 23
 VALID_CARD_IDS_FILE = 'valid_card_ids.txt'
 
+# --- Signal Configuration ---
+SIGNAL_SENDER_NR = '+31600000000'
+
 continue_reading = True
-allowed_card_ids = []
+allowed_cards = {}
+last_used_phone_number = None
+
 relay: OutputDevice
 reed_closed_door: Button
 reed_open_door: Button
+door_open_timer: Timer
 
 logging.basicConfig(level=logging.INFO)
+
+# Compile regex for E.164 phone number format validation
+PHONE_NUMBER_REGEX = re.compile(r'^\+[1-9]\d{1,14}$')
+
+
+def is_valid_phone_number(phone_number):
+    """Validates a phone number against the E.164 format."""
+    if not phone_number:
+        return False
+    return PHONE_NUMBER_REGEX.match(phone_number) is not None
 
 
 def setup():
     global relay
     relay = OutputDevice(RELAY_PIN, active_high=True, initial_value=False)
     setup_reed_contacts()
-    read_allowed_card_ids()
+    read_allowed_cards()
 
 
 def run_io_tasks_in_parallel(tasks):
@@ -38,24 +57,55 @@ def run_io_tasks_in_parallel(tasks):
             running_task.result()
 
 
-def read_allowed_card_ids():
-    logging.info('Reading allowed card ids from %s', VALID_CARD_IDS_FILE)
-    with open(VALID_CARD_IDS_FILE, 'r') as file:
-        global allowed_card_ids
-        allowed_card_ids = file.read().splitlines()
-        logging.info('Allowed card ids: %s', str(allowed_card_ids))
+def read_allowed_cards():
+    logging.info('Reading allowed cards from %s', VALID_CARD_IDS_FILE)
+    global allowed_cards
+    new_allowed_cards = {}
+    try:
+        with open(VALID_CARD_IDS_FILE, 'r') as file:
+            for i, line in enumerate(file, 1):
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+
+                if ',' not in line:
+                    logging.error(f'Invalid format on line {i} in {VALID_CARD_IDS_FILE}: Missing comma.')
+                    continue
+
+                card_id, phone_number = [part.strip() for part in line.split(',', 1)]
+
+                if not card_id:
+                    logging.error(f'Validation failed on line {i}: Card ID is missing. Skipping.')
+                    continue
+                
+                if not is_valid_phone_number(phone_number):
+                    logging.error(f"Validation failed on line {i}: Invalid phone number '{phone_number}' for card '{card_id}'. Skipping.")
+                    continue
+
+                new_allowed_cards[card_id] = phone_number
+        allowed_cards = new_allowed_cards
+        logging.info('Allowed cards loaded: %s', str(allowed_cards))
+    except FileNotFoundError:
+        logging.error(f'Could not find {VALID_CARD_IDS_FILE}. No cards will be loaded.')
+        allowed_cards = {}
 
 
-def get_allowed_card_ids():
-    return allowed_card_ids
+def get_allowed_cards():
+    return allowed_cards
 
 
-def add_allowed_card_id(card_id):
+def add_allowed_card(card_id, phone_number):
+    """Adds a new card and phone number, validating the number first."""
+    if not is_valid_phone_number(phone_number):
+        logging.error(f'Attempted to add invalid phone number: {phone_number}')
+        return False
+
     card_id_str = str(card_id)
     with open(VALID_CARD_IDS_FILE, 'a') as file:
-        file.write(card_id_str + '\n')
-    logging.info('Writing card id %s to file %s', card_id_str, VALID_CARD_IDS_FILE)
-    read_allowed_card_ids()
+        file.write(f'\n{card_id_str},{phone_number}')
+    logging.info(f'Writing card id {card_id_str} with phone {phone_number} to file.')
+    read_allowed_cards()
+    return True
 
 
 def toggle_relay():
@@ -96,25 +146,56 @@ def reed_closed_door_open():
 
 
 def reed_closed_door_closed():
+    global door_open_timer
     logging.info('Closed door reed contact is closed - garage door is closed.')
+    if door_open_timer and door_open_timer.is_alive():
+        door_open_timer.cancel()
+        logging.info('Cancelled door open timer as door is now closed.')
 
 
 def reed_open_door_open():
+    global door_open_timer
     logging.info('Open door reed is open - garage door is closing/closed.')
+    if door_open_timer and door_open_timer.is_alive():
+        door_open_timer.cancel()
+        logging.info('Cancelled door open timer.')
+
+
+def send_signal_notification():
+    global last_used_phone_number
+    if reed_open_door.is_pressed and last_used_phone_number:
+        logging.info(f'Sending Signal notification to {last_used_phone_number}.')
+        message = 'Warning: Garage door has been open for more than 30 seconds!'
+        try:
+            subprocess.run([
+                'signal-cli', '-u', SIGNAL_SENDER_NR, 'send', '-m', message, last_used_phone_number
+            ], check=True)
+            logging.info('Successfully sent Signal message.')
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
+            logging.error(f'Failed to send Signal message: {e}')
+    else:
+        logging.warning('Door is no longer open or last user is unknown; skipping notification.')
 
 
 def reed_open_door_closed():
-    logging.info('Open door reed contact is door is closed - garage door is open.')
+    global door_open_timer
+    logging.info('Open door reed contact is closed - garage door is open.')
+    if door_open_timer and door_open_timer.is_alive():
+        door_open_timer.cancel()
+    door_open_timer = Timer(30, send_signal_notification)
+    door_open_timer.start()
 
 
 def start_listening():
+    global last_used_phone_number
     logging.info('Starting NFC reader')
     reader = SimpleMFRC522()
     while continue_reading:
         (tag_id, tag_text) = reader.read()
         tag_id_str = str(tag_id)
-        if tag_id_str in allowed_card_ids:
-            logging.info('ACCESS FOR CARD %s', tag_id_str)
+        if tag_id_str in allowed_cards:
+            last_used_phone_number = allowed_cards[tag_id_str]
+            logging.info(f'ACCESS FOR CARD {tag_id_str}, user: {last_used_phone_number}')
             toggle_relay()
         else:
-            logging.info('ACCESS BLOCKED FOR CARD %s', tag_id_str)
+            logging.info(f'ACCESS BLOCKED FOR CARD {tag_id_str}')

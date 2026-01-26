@@ -5,11 +5,14 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 from time import sleep
 
-from fake_rpigpio.RPi import GPIO
-# from RPi import GPIO
 from gpiozero import Button
 from gpiozero import OutputDevice
 from mfrc522 import SimpleMFRC522
+
+try:
+    from RPi import GPIO
+except ImportError:
+    from fake_rpi.RPi import GPIO
 
 print('Press Control + C to exit the program')
 

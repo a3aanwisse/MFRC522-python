@@ -1,30 +1,78 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <link rel="stylesheet" href='/static/style.css' />
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"> </script>
-    <script type=text/javascript>
-        $(function() {
-            $("#submit_new_card_id").click(function (event) {
-                var new_card_id = $("#new_card_id").val();
-                $.ajax({
-                   url: '/cards/' + new_card_id,
-                   type: 'PUT',
-                   success: function(response) {
-                        $("#new_card_id").text('');
-                        $("#new_card_id_result").text('Added');
-                   }
-                });
-            })
-        });
-    </script>
+    <meta charset="UTF-8">
+    <title>Manage RFID Cards</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; background-color: #f9f9f9; }
+        .container { max-width: 800px; margin: auto; background: #fff; padding: 2em; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 2em; }
+        th, td { border: 1px solid #ccc; padding: 12px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .form-group { margin-bottom: 1em; }
+        label { display: block; margin-bottom: 0.5em; font-weight: bold; }
+        input { padding: 10px; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 12px 18px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        button:hover { background-color: #0056b3; }
+        h1, h2 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 0.5em; }
+        a { color: #007bff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* Flash message styles */
+        .flash { padding: 1em; margin-bottom: 1em; border-radius: 4px; }
+        .flash.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .flash.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
 </head>
 <body>
-    <h2>Valid card ids:</h2>
-    <p>{{ data }}</p>
+    <div class="container">
+        <h1>Manage RFID Cards</h1>
 
-    <h2>Add card</h2>
-    <input type="text" id="new_card_id"/>
-    <input type="button" id="submit_new_card_id" value="Add card ID "/>
-    <p><div id="new_card_id_result"></div></p>
+        {# Display flashed messages #}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <h2>Add New Card</h2>
+        <form action="{{ url_for('manage_cards') }}" method="post">
+            <div class="form-group">
+                <label for="card_id">Card ID:</label>
+                <input type="text" id="card_id" name="card_id" required>
+            </div>
+            <div class="form-group">
+                <label for="phone_number">Phone Number (E.164 format):</label>
+                <input type="text" id="phone_number" name="phone_number" placeholder="+31612345678" required>
+            </div>
+            <button type="submit">Add Card</button>
+        </form>
+
+        <h2>Authorized Cards</h2>
+        {% if cards %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Card ID</th>
+                        <th>Associated Phone Number</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for card_id, phone_number in cards.items() %}
+                        <tr>
+                            <td>{{ card_id }}</td>
+                            <td>{{ phone_number }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No authorized cards found.</p>
+        {% endif %}
+
+        <p><a href="{{ url_for('index') }}">Back to Home</a></p>
+    </div>
 </body>
 </html>
