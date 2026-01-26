@@ -5,17 +5,34 @@ set -e
 
 echo "--- Signal-CLI Auto-Installer for Raspberry Pi ---"
 
-# --- Step 1: Install Dependencies ---
-echo "[1/4] Installing dependencies (Java, wget, curl, jq)..."
+# --- Step 1: Install Dependencies (with architecture-aware Java installation) ---
+echo "[1/4] Installing dependencies..."
 sudo apt-get update
-sudo apt-get install -y default-jre wget curl jq
+
+# Detect architecture to install the correct Java version
+ARCH=$(uname -m)
+echo "Detected architecture: $ARCH"
+
+if [ "$ARCH" = "armv6l" ]; then
+    echo "ARMv6 architecture detected (Pi 1/Zero). Installing Java 8."
+    sudo apt-get install -y openjdk-8-jre wget curl jq
+else
+    echo "ARMv7 or newer architecture detected. Installing default Java."
+    sudo apt-get install -y default-jre wget curl jq
+fi
 
 # Verify Java installation
 if ! command -v java &> /dev/null; then
     echo "ERROR: Java installation failed. Please install Java manually and try again."
     exit 1
 fi
-echo "Java is installed."
+echo "Java is installed successfully."
+
+# Add Java version to the log output
+echo "--- Java Version Info ---"
+java -version
+echo "-------------------------"
+
 
 # --- Step 2: Find and Download the Latest signal-cli Release ---
 echo "[2/4] Finding the latest signal-cli version..."
