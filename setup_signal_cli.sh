@@ -13,17 +13,14 @@ sudo apt-get update
 ARCH=$(uname -m)
 echo "Detected architecture: $ARCH"
 
-if [ "$ARCH" = "armv6l" ]; then
-    echo "ARMv6 architecture detected (Pi 1/Zero). Installing Java 8."
-    sudo apt-get install -y openjdk-8-jre wget curl jq
-elif [ "$ARCH" = "armv7l" ]; then
-    echo "ARMv7 architecture detected (Pi 2/3). Installing Java 8."
+if [[ "$ARCH" == "armv6l" || "$ARCH" == "armv7l" ]]; then
+    echo "ARMv6/v7 architecture detected (Pi 1/Zero/2/3).. Installing Java 8."
     sudo apt-get install -y openjdk-8-jre wget curl jq
 elif [ "$ARCH" = "aarch64" ]; then
-    echo "ARM64 architecture detected (Pi 3/4 64-bit OS). Installing default Java."
+    echo "ARM64 architecture detected (Pi 3/4 64-bit OS).. Installing default Java."
     sudo apt-get install -y default-jre wget curl jq
 else
-    echo "Unknown or non-ARM architecture ($ARCH). Installing default Java (may not be compatible)."
+    echo "Unknown or non-ARM architecture ($ARCH). Installing default Java."
     sudo apt-get install -y default-jre wget curl jq
 fi
 
@@ -39,7 +36,6 @@ echo "--- Java Version Info ---"
 java -version
 echo "-------------------------"
 
-
 # --- Step 2: Find and Download the Latest signal-cli Release ---
 echo "[2/4] Finding the latest signal-cli version..."
 
@@ -49,7 +45,7 @@ NATIVE_BUILD_SUFFIX=""
 # Determine the preferred native build suffix based on detected architecture
 if [ "$ARCH" = "aarch64" ]; then
     NATIVE_BUILD_SUFFIX="arm64-native.tar.gz"
-elif [[ "$ARCH" == arm* ]]; then # Covers armv6l, armv7l
+elif [[ "$ARCH" == arm* ]]; then
     NATIVE_BUILD_SUFFIX="armhf-native.tar.gz"
 fi
 
@@ -90,19 +86,28 @@ wget --show-progress "$LATEST_URL"
 # --- Step 3: Extract and Install ---
 echo "[3/4] Installing signal-cli..."
 
-# Extract the archive
-tar -xf "$FILENAME"
-# The directory name is the filename without the .tar.gz
-DIR_NAME="${FILENAME%.tar.gz}"
+# Find the signal-cli executable within the extracted directory (whose name we don't know)
+SIGNAL_CLI_EXECUTABLE=$(find . -name "signal-cli" -type f | head -n 1)
 
-# Move the binary to a system-wide location
-sudo mv "$DIR_NAME/bin/signal-cli" /usr/local/bin/
+if [ -z "$SIGNAL_CLI_EXECUTABLE" ]; then
+    echo "ERROR: Could not find 'signal-cli' executable in the extracted archive."
+    exit 1
+fi
+
+echo "Found executable at: $SIGNAL_CLI_EXECUTABLE"
+
+# Move the found executable to a system-wide location
+sudo mv "$SIGNAL_CLI_EXECUTABLE" /usr/local/bin/
 
 echo "signal-cli has been installed to /usr/local/bin/"
 
 # --- Step 4: Clean Up ---
 echo "[4/4] Cleaning up..."
-rm -rf "$DIR_NAME"
+# The extracted directory name is unpredictable, so we find it based on the tarball name
+DIR_NAME=$(tar -tf "$FILENAME" | head -1 | cut -f1 -d"/")
+if [ -d "$DIR_NAME" ]; then
+    rm -r "$DIR_NAME"
+fi
 rm "$FILENAME"
 
 echo ""
