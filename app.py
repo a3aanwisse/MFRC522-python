@@ -7,7 +7,7 @@ import logging
 # --- Basic Logging Configuration ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Set up mocks and get config path. This must be done before other imports.
+# Set up mocks and get config path.
 IS_DEVELOPMENT, CONFIG_FILE_PATH = dev_mocks.setup_development_mode()
 
 from flask import Flask, render_template, request, redirect, url_for, flash
@@ -17,7 +17,6 @@ import threading
 import controller
 
 app = Flask(__name__)
-# A secret key is required for flashing messages
 app.secret_key = os.urandom(24)
 auth = HTTPBasicAuth()
 
@@ -40,12 +39,10 @@ except (configparser.NoSectionError, configparser.NoOptionError, FileNotFoundErr
     logging.error("Please provide a valid config file using the --config argument.")
     sys.exit(1)
 
-
-# Suppress Werkzeug's default INFO and WARNING logs
+# Suppress Werkzeug's default logs
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
-# Special exit code to signal the launcher script to update and restart
 EXIT_CODE_FOR_UPDATE = 10
 
 
@@ -65,10 +62,6 @@ def index():
 @app.route('/update', methods=['POST'])
 @auth.login_required
 def trigger_update():
-    """
-    Shuts down the application with a special exit code.
-    The launcher.sh script will detect this code, pull from git, and restart.
-    """
     logging.warning('Received update request. Exiting with update code...')
     os._exit(EXIT_CODE_FOR_UPDATE)
 
@@ -78,21 +71,17 @@ def trigger_update():
 def manage_cards():
     if request.method == 'POST':
         card_id = request.form.get('card_id')
-        phone_number = request.form.get('phone_number')
 
-        if not card_id or not phone_number:
-            flash('Card ID and Phone Number are required.', 'error')
+        if not card_id:
+            flash('Card ID is required.', 'error')
         else:
-            success = controller.add_allowed_card(card_id, phone_number)
-            if success:
-                flash(f'Successfully added card {card_id}.', 'success')
-            else:
-                flash(
-                    f"Failed to add card. The phone number '{phone_number}' is not a valid E.164 number (e.g., +31612345678).",
-                    'error')
-
+            # The controller now handles adding the card ID to the list
+            controller.add_allowed_card(card_id)
+            flash(f'Successfully added card {card_id}.', 'success')
+        
         return redirect(url_for('manage_cards'))
 
+    # On GET request, display the cards
     cards = controller.get_allowed_cards()
     return render_template('cards.html', cards=cards)
 
@@ -143,7 +132,7 @@ if __name__ == '__main__':
 
     except KeyboardInterrupt:
         logging.info('Program terminated manually!')
-        sys.exit(0) # Clean exit
+        sys.exit(0)
     except Exception as e:
         logging.error(f'An unexpected error occurred: {e}', exc_info=True)
-        sys.exit(1) # Unclean exit
+        sys.exit(1)

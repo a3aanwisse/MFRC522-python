@@ -3,6 +3,8 @@
 
 mfrc522-python == 0.0.7
 gpiozero == 2.0.1
+requests
+
 # RPi.GPIO is usually pre-installed or installed as a dependency of gpiozero on Pi.
 # If not, uncomment the line below.
 # RPi.GPIO == 0.7.1
