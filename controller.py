@@ -2,8 +2,8 @@
 # -*- coding: utf8 -*-
 
 import logging
-import os
-import re
+import sys
+
 import requests
 import time
 import configparser
@@ -161,7 +161,7 @@ def send_ntfy_notification():
     if reed_open_door.is_pressed:
         title = 'Garage Door Alert'
         message = 'The garage door has been open for more than 30 seconds!'
-        
+
         if last_used_card_id:
             message += f' Last opened by card: {last_used_card_id}.'
         else:
