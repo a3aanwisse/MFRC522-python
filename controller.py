@@ -195,8 +195,9 @@ def reed_open_door_closed():
 
 def start_listening():
     global last_used_card_id
-    logging.info('Starting NFC reader')
+    logging.info('Starting NFC reader...')
     reader = SimpleMFRC522()
+    logging.info('Started NFC reader')
     while continue_reading:
         (tag_id, tag_text) = reader.read()
         tag_id_str = str(tag_id)
@@ -206,3 +207,4 @@ def start_listening():
             toggle_relay()
         else:
             logging.info(f'ACCESS BLOCKED FOR CARD {tag_id_str}')
+
