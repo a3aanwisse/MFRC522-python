@@ -61,7 +61,7 @@ def inject_version():
 @app.route('/')
 @auth.login_required
 def index():
-    return render_template('index.html', username=auth.username())
+    return render_template('index.html', username=auth.username(), ntfy_topic=controller.NTFY_TOPIC)
 
 
 @app.route('/update', methods=['POST'])
@@ -154,7 +154,7 @@ def read_reed_open_door():
 if __name__ == '__main__':
     try:
         # Pass the loaded config object to the controller
-        controller.setup(config, CONFIG_FILE_PATH)
+        controller.setup(config)
 
         if not IS_DEVELOPMENT:
             logging.info('Starting production server with Waitress...')

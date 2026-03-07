@@ -18,7 +18,7 @@ import requests
 from gpiozero import Button, OutputDevice
 from mfrc522 import SimpleMFRC522
 
-VERSION = "1.3.2"
+VERSION = "1.4.0"
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
 RELAY_PIN = 17
@@ -46,24 +46,9 @@ stat_listeners = [] # List of queues to notify on updates
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def setup(config, config_file_path=None):
+def setup(config):
     """Sets up the controller with the given configuration."""
     global relay, VALID_CARDS_FILE, NTFY_TOPIC, STATS_FILE, DOOR_OPEN_TIMEOUT, VERSION
-
-    # Sync version to config file if path is provided and versions differ
-    if config_file_path:
-        try:
-            conf_version = config.get('system', 'version', fallback='0.0.0')
-            if conf_version != VERSION:
-                logging.info(f"Version mismatch. Updating config from {conf_version} to {VERSION}")
-                if not config.has_section('system'):
-                    config.add_section('system')
-                config.set('system', 'version', VERSION)
-                with open(config_file_path, 'w') as f:
-                    config.write(f)
-                logging.info(f"Updated version in {config_file_path}")
-        except Exception as e:
-            logging.error(f"Failed to update version in config file: {e}")
 
     try:
         VALID_CARDS_FILE = config.get('paths', 'valid_cards_file')
