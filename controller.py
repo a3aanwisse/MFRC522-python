@@ -18,7 +18,7 @@ import requests
 from gpiozero import Button, OutputDevice
 from mfrc522 import SimpleMFRC522
 
-VERSION = "1.4.0"
+VERSION = "1.4.4"
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
 RELAY_PIN = 17
@@ -268,6 +268,7 @@ def send_ntfy_notification():
         # Add an action button to the notification
         headers = {
             'Title': title,
+            'Priority': 'high',
             'Actions': f'http, Sluiten, https://ntfy.sh/{control_topic}, body=CLOSE_TOKEN_{token}, method=POST'
         }
 
