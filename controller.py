@@ -325,7 +325,7 @@ def send_ntfy_notification(is_test=False):
         image_data = None
         if CAMERA_URL:
             try:
-                logging.info(f"Fetching snapshot from {CAMERA_URL}...")
+                logging.info(f"Fetching snapshot from {CAMERA_URL} for user {CAMERA_USER}...")
                 auth = None
                 if CAMERA_USER and CAMERA_PASS:
                     auth = HTTPDigestAuth(CAMERA_USER, CAMERA_PASS)
