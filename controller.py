@@ -157,10 +157,22 @@ def reed_closed_door_closed():
 
 def reed_open_door_open():
     global door_open_timer
-    logging.info('Open door reed is open - garage door is closing/closed.')
+    logging.info('Open door reed contact is open - garage door is closing/closed.')
     if door_open_timer and door_open_timer.is_alive():
         door_open_timer.cancel()
         logging.info('Cancelled door open timer.')
+
+
+def reed_open_door_closed():
+    global door_open_timer
+    logging.info('Open door reed contact is closed - garage door is open.')
+    if door_open_timer and door_open_timer.is_alive():
+        door_open_timer.cancel()
+        logging.info('Cancelling previous door open timer.')
+
+    logging.info('Starting 60-second timer for door open notification.')
+    door_open_timer = Timer(120, send_ntfy_notification)
+    door_open_timer.start()
 
 
 def send_ntfy_notification():
@@ -200,18 +212,6 @@ def send_ntfy_notification():
             logging.error(f'Failed to send ntfy notification: {e}')
     else:
         logging.warning('Door is no longer open; skipping notification.')
-
-
-def reed_open_door_closed():
-    global door_open_timer
-    logging.info('Open door reed contact is closed - garage door is open.')
-    if door_open_timer and door_open_timer.is_alive():
-        door_open_timer.cancel()
-        logging.info('Cancelling previous door open timer.')
-
-    logging.info('Starting 60-second timer for door open notification.')
-    door_open_timer = Timer(120, send_ntfy_notification)
-    door_open_timer.start()
 
 
 def listen_for_ntfy_commands():
