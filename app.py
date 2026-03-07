@@ -154,7 +154,7 @@ def read_reed_open_door():
 if __name__ == '__main__':
     try:
         # Pass the loaded config object to the controller
-        controller.setup(config)
+        controller.setup(config, CONFIG_FILE_PATH)
 
         if not IS_DEVELOPMENT:
             logging.info('Starting production server with Waitress...')
