@@ -19,7 +19,7 @@ from requests.auth import HTTPDigestAuth
 from gpiozero import Button, OutputDevice
 from mfrc522 import SimpleMFRC522
 
-VERSION = "1.7.1"
+VERSION = "1.8.0"
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
 RELAY_PIN = 17
@@ -51,9 +51,9 @@ hardware_listeners = [] # List of queues for hardware status updates
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def setup(config):
-    """Sets up the controller with the given configuration."""
-    global relay, VALID_CARDS_FILE, NTFY_TOPIC, STATS_FILE, DOOR_OPEN_TIMEOUT, VERSION, CAMERA_URL, CAMERA_USER, CAMERA_PASS
+def load_config(config):
+    """Loads configuration values from the config object."""
+    global VALID_CARDS_FILE, NTFY_TOPIC, STATS_FILE, DOOR_OPEN_TIMEOUT, CAMERA_URL, CAMERA_USER, CAMERA_PASS
 
     try:
         VALID_CARDS_FILE = config.get('paths', 'valid_cards_file')
@@ -64,13 +64,23 @@ def setup(config):
         CAMERA_USER = config.get('camera', 'username', fallback=None)
         CAMERA_PASS = config.get('camera', 'password', fallback=None)
         logging.info('Successfully loaded paths and ntfy config.')
+        
+        read_allowed_cards()
+        return True
     except (configparser.NoSectionError, configparser.NoOptionError) as e:
         logging.error(f'Could not read configuration from config.ini: {e}')
+        return False
+
+
+def setup(config):
+    """Sets up the controller with the given configuration."""
+    global relay
+
+    if not load_config(config):
         sys.exit(1)
 
     relay = OutputDevice(RELAY_PIN, active_high=True, initial_value=False)
     setup_reed_contacts()
-    read_allowed_cards()
 
 
 def run_io_tasks_in_parallel(tasks):

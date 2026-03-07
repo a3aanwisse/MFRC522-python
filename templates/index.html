@@ -53,6 +53,18 @@
             <p class="lead text-muted">Ingelogd als: <strong>{{ username }}</strong></p>
         </div>
 
+        {# Display flashed messages #}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         <!-- QR Code Modal -->
         <div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
@@ -123,6 +135,19 @@
                         <p class="card-text text-muted">Scan QR voor meldingen.</p>
                     </div>
                 </div>
+            </div>
+
+            <!-- Config Reload -->
+            <div class="col-md-6 col-lg-3">
+                <form action="/config/reload" method="post" onsubmit="return confirm('Configuratie herladen?');" style="height: 100%;">
+                    <button type="submit" class="card menu-card btn-card text-center p-4 w-100">
+                        <div class="card-body">
+                            <div class="card-icon">⚙️</div>
+                            <h4 class="card-title">Configuratie</h4>
+                            <p class="card-text text-muted">Herlaad instellingen.</p>
+                        </div>
+                    </button>
+                </form>
             </div>
 
             <!-- Update System -->

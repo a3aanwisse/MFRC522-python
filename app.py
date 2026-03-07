@@ -71,6 +71,34 @@ def trigger_update():
     os._exit(EXIT_CODE_FOR_UPDATE)
 
 
+@app.route('/config/reload', methods=['POST'])
+@auth.login_required
+def reload_config():
+    try:
+        logging.info("Reloading configuration...")
+        config.read(CONFIG_FILE_PATH)
+        
+        # Update credentials
+        try:
+            new_username = config.get('credentials', 'username')
+            new_password = config.get('credentials', 'password')
+            global users
+            users = { new_username: generate_password_hash(new_password) }
+        except Exception as e:
+            logging.warning(f"Failed to update credentials during reload (keeping old ones): {e}")
+
+        if controller.load_config(config):
+            flash('Configuratie succesvol herladen.', 'success')
+        else:
+            flash('Fout bij herladen configuratie. Check logs.', 'error')
+            
+    except Exception as e:
+        logging.error(f"Error reloading config: {e}")
+        flash(f'Error: {e}', 'error')
+        
+    return redirect(url_for('index'))
+
+
 @app.route('/cards', methods=['GET', 'POST'])
 @auth.login_required
 def manage_cards():
