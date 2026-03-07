@@ -2,9 +2,10 @@ import dev_mocks
 import sys
 import os
 import configparser
+import json
 import logging
 import threading
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, Response
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 import controller
@@ -97,6 +98,32 @@ def manage_cards():
 def stats():
     data = controller.get_stats()
     return render_template('stats.html', stats=data)
+
+
+@app.route('/api/stats')
+@auth.login_required
+def api_stats():
+    return jsonify(controller.get_stats())
+
+
+@app.route('/stream/stats')
+@auth.login_required
+def stream_stats():
+    def generate():
+        # Register a new listener queue
+        q = controller.register_stat_listener()
+        try:
+            # Send initial data immediately upon connection
+            yield f"data: {json.dumps(controller.get_stats())}\n\n"
+            while True:
+                # Wait for new data (blocks until controller puts something in queue)
+                data = q.get()
+                yield f"data: {json.dumps(data)}\n\n"
+        finally:
+            # Clean up when client disconnects
+            controller.remove_stat_listener(q)
+
+    return Response(generate(), mimetype='text/event-stream')
 
 
 @app.route('/test')

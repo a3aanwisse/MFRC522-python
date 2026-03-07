@@ -23,7 +23,7 @@
                 <div class="card stat-card mb-3">
                     <div class="card-body">
                         <h5 class="card-title">Totaal Geopend</h5>
-                        <p class="card-text display-4">{{ stats.total_opens }}</p>
+                        <p class="card-text display-4" id="total_opens">{{ stats.total_opens }}</p>
                     </div>
                 </div>
             </div>
@@ -31,7 +31,7 @@
                 <div class="card stat-card warning mb-3">
                     <div class="card-body">
                         <h5 class="card-title">Lang Open Meldingen</h5>
-                        <p class="card-text display-4">{{ stats.long_open_events }}</p>
+                        <p class="card-text display-4" id="long_open_events">{{ stats.long_open_events }}</p>
                     </div>
                 </div>
             </div>
@@ -47,7 +47,7 @@
                         <th>Gebruiker / Info</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="history_body">
                     {% for event in stats.history %}
                     <tr>
                         <td>{{ event.timestamp }}</td>
@@ -63,5 +63,49 @@
             </table>
         </div>
     </div>
+
+    <script>
+        // Gebruik Server-Sent Events (SSE) in plaats van polling
+        const evtSource = new EventSource("/stream/stats");
+
+        evtSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            updateDOM(data);
+        };
+
+        evtSource.onerror = function(err) {
+            console.error("EventSource failed:", err);
+            // EventSource probeert automatisch opnieuw te verbinden
+        };
+
+        function updateDOM(data) {
+            // Update de tellers
+            document.getElementById('total_opens').innerText = data.total_opens;
+            document.getElementById('long_open_events').innerText = data.long_open_events;
+
+            // Update de tabel
+            const tbody = document.getElementById('history_body');
+            tbody.innerHTML = ''; // Maak tabel leeg
+
+            data.history.forEach(event => {
+                const row = document.createElement('tr');
+                
+                // Bepaal badge kleur
+                let badgeClass = 'bg-warning text-dark';
+                if (event.action === 'OPEN') {
+                    badgeClass = 'bg-success';
+                } else if (event.action === 'CLOSE') {
+                    badgeClass = 'bg-secondary';
+                }
+
+                row.innerHTML = `
+                    <td>${event.timestamp}</td>
+                    <td><span class="badge ${badgeClass}">${event.action}</span></td>
+                    <td>${event.user}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+    </script>
 </body>
 </html>

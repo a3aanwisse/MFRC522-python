@@ -5,6 +5,7 @@ import logging
 import sys
 import time
 import json
+import queue
 import os
 from datetime import datetime
 import uuid
@@ -28,6 +29,7 @@ REED_CONTACT_OPEN_DOOR_PIN = 23
 VALID_CARDS_FILE = None
 NTFY_TOPIC = None
 STATS_FILE = None
+DOOR_OPEN_TIMEOUT = 120 # Default value in seconds
 
 continue_reading = True
 allowed_cards = {}
@@ -39,17 +41,19 @@ reed_closed_door: Button = None
 reed_open_door: Button = None
 door_open_timer: Timer = None
 stats_lock = threading.Lock()
+stat_listeners = [] # List of queues to notify on updates
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 def setup(config):
     """Sets up the controller with the given configuration."""
-    global relay, VALID_CARDS_FILE, NTFY_TOPIC, STATS_FILE
+    global relay, VALID_CARDS_FILE, NTFY_TOPIC, STATS_FILE, DOOR_OPEN_TIMEOUT
 
     try:
         VALID_CARDS_FILE = config.get('paths', 'valid_cards_file')
         NTFY_TOPIC = config.get('ntfy', 'topic')
+        DOOR_OPEN_TIMEOUT = config.getint('ntfy', 'door_open_timeout', fallback=120)
         STATS_FILE = config.get('paths', 'stats_file', fallback='garage_stats.json')
         logging.info('Successfully loaded paths and ntfy config.')
     except (configparser.NoSectionError, configparser.NoOptionError) as e:
@@ -141,6 +145,20 @@ def log_stat_event(action, user=None):
 
         with open(STATS_FILE, 'w') as f:
             json.dump(data, f, indent=4)
+            
+    # Notify all active listeners (SSE streams)
+    # We send the full data object so the frontend is always in sync
+    dead_listeners = []
+    for q in stat_listeners:
+        try:
+            q.put(data)
+        except:
+            dead_listeners.append(q)
+            
+    # Cleanup dead listeners if any (though usually handled by remove_listener)
+    for d in dead_listeners:
+        if d in stat_listeners:
+            stat_listeners.remove(d)
 
 
 def toggle_relay():
@@ -215,8 +233,8 @@ def reed_open_door_closed():
         door_open_timer.cancel()
         logging.info('Cancelling previous door open timer.')
 
-    logging.info('Starting 60-second timer for door open notification.')
-    door_open_timer = Timer(120, send_ntfy_notification)
+    logging.info(f'Starting {DOOR_OPEN_TIMEOUT}-second timer for door open notification.')
+    door_open_timer = Timer(DOOR_OPEN_TIMEOUT, send_ntfy_notification)
     door_open_timer.start()
 
 
@@ -228,7 +246,11 @@ def send_ntfy_notification():
 
     if reed_open_door and reed_open_door.is_pressed:
         title = 'Garagedeur alarm!'
-        message = 'De garagedeur is meer dan 2 minuten open!'
+        
+        # Create a friendly time string (e.g., "2 minuten" or "90 seconden")
+        time_str = f"{int(DOOR_OPEN_TIMEOUT / 60)} minuten" if DOOR_OPEN_TIMEOUT % 60 == 0 else f"{DOOR_OPEN_TIMEOUT} seconden"
+        
+        message = f'De garagedeur is meer dan {time_str} open!'
         log_stat_event('LONG_OPEN_WARNING')
 
         if last_used_card_id:
@@ -240,10 +262,13 @@ def send_ntfy_notification():
         token = str(uuid.uuid4())
         active_close_token = token
 
+        # Use a separate control topic for commands so they don't clutter the user's feed
+        control_topic = f"{NTFY_TOPIC}_control"
+
         # Add an action button to the notification
         headers = {
             'Title': title,
-            'Actions': f'http, Sluiten, https://ntfy.sh/{NTFY_TOPIC}, body=CLOSE_TOKEN_{token}, method=POST'
+            'Actions': f'http, Sluiten, https://ntfy.sh/{control_topic}, body=CLOSE_TOKEN_{token}, method=POST'
         }
 
         logging.info(f'Sending notification to ntfy topic: {NTFY_TOPIC}')
@@ -266,11 +291,13 @@ def listen_for_ntfy_commands():
     if not NTFY_TOPIC:
         return
 
-    logging.info(f"Starting remote command listener on topic: {NTFY_TOPIC}")
+    # Listen on a separate topic to keep the main topic clean
+    control_topic = f"{NTFY_TOPIC}_control"
+    logging.info(f"Starting remote command listener on topic: {control_topic}")
     while True:
         try:
             # Listen to the stream for JSON data
-            resp = requests.get(f'https://ntfy.sh/{NTFY_TOPIC}/json', stream=True, timeout=60)
+            resp = requests.get(f'https://ntfy.sh/{control_topic}/json', stream=True, timeout=60)
             for line in resp.iter_lines():
                 if line:
                     data = json.loads(line)
@@ -311,6 +338,17 @@ def get_stats():
             pass
     return {'total_opens': 0, 'long_open_events': 0, 'history': []}
 
+
+def register_stat_listener():
+    """Creates a queue for a new listener and returns it."""
+    q = queue.Queue()
+    stat_listeners.append(q)
+    return q
+
+def remove_stat_listener(q):
+    """Removes a listener queue."""
+    if q in stat_listeners:
+        stat_listeners.remove(q)
 
 def start_listening():
     global last_used_card_id
