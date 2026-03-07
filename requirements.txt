@@ -14,3 +14,4 @@ flask == 3.1.2
 flask_httpauth
 markupsafe == 3.0.3
 werkzeug == 3.1.5
+waitress == 3.0.0

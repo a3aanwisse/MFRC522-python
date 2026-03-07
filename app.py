@@ -117,18 +117,29 @@ if __name__ == '__main__':
         # Pass the loaded config object to the controller
         controller.setup(config)
 
-        app_thread = threading.Thread(
-            target=lambda: app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False))
-        app_thread.daemon = True
-        app_thread.start()
-
         if not IS_DEVELOPMENT:
+            from waitress import serve
+            logging.info('Starting production server with Waitress...')
+            
+            # Run waitress in a separate thread so we can also run the NFC listener
+            server_thread = threading.Thread(
+                target=lambda: serve(app, host='0.0.0.0', port=5000, threads=4)
+            )
+            server_thread.daemon = True
+            server_thread.start()
+
             logging.info('Starting NFC listener on the Raspberry Pi.')
             logging.info('To install production dependencies, run: pip install -r requirements.txt')
             controller.start_listening()
         else:
-            logging.info('Running in development mode. NFC listener is disabled.')
+            logging.info('Running in development mode with Flask dev server.')
             logging.info('To install development dependencies, run: pip install -r requirements-dev.txt')
+            
+            app_thread = threading.Thread(
+                target=lambda: app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False))
+            app_thread.daemon = True
+            app_thread.start()
+
             app_thread.join()
 
     except KeyboardInterrupt:
