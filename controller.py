@@ -54,7 +54,7 @@ def setup(config):
         VALID_CARDS_FILE = config.get('paths', 'valid_cards_file')
         NTFY_TOPIC = config.get('ntfy', 'topic')
         DOOR_OPEN_TIMEOUT = config.getint('ntfy', 'door_open_timeout', fallback=120)
-        STATS_FILE = config.get('paths', 'stats_file', fallback='garage_stats.json')
+        STATS_FILE = config.get('paths', 'stats_file', fallback='stats.json')
         logging.info('Successfully loaded paths and ntfy config.')
     except (configparser.NoSectionError, configparser.NoOptionError) as e:
         logging.error(f'Could not read configuration from config.ini: {e}')
