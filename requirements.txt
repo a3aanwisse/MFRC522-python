@@ -2,7 +2,7 @@
 # To install, run: pip install -r requirements.txt
 
 mfrc522-python == 0.0.7
-gpiozero == 2.0
+gpiozero == 1.6.2
 requests
 
 # RPi.GPIO is usually pre-installed or installed as a dependency of gpiozero on Pi.
