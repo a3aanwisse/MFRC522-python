@@ -5,6 +5,7 @@ import logging
 import sys
 import time
 import json
+import uuid
 import threading
 import configparser
 from concurrent.futures import ThreadPoolExecutor
@@ -26,6 +27,7 @@ NTFY_TOPIC = None
 continue_reading = True
 allowed_cards = {}
 last_used_card_id = None  # We only need to know if a card was used, not the phone number
+active_close_token = None # Stores the unique token for the current open session
 
 relay: OutputDevice = None
 reed_closed_door: Button = None
@@ -162,23 +164,28 @@ def reed_open_door_open():
 
 
 def send_ntfy_notification():
+    global active_close_token
     if not NTFY_TOPIC or NTFY_TOPIC == 'your_ntfy_topic_here':
         logging.error('ntfy topic is not configured in config.ini. Cannot send notification.')
         return
 
     if reed_open_door and reed_open_door.is_pressed:
-        title = 'Garage Door Alert'
-        message = 'The garage door has been open for more than 30 seconds!'
+        title = 'Garagedeur alarm!'
+        message = 'De garagedeur is meer dan 2 minuten open!'
 
         if last_used_card_id:
-            message += f' Last opened by card: {last_used_card_id}.'
+            message += f' Laatst opengemaakt met kaart: {last_used_card_id}.'
         else:
-            message += ' Last opened manually (user unknown).'
+            message += ' Laatst handmatig geopend (gebruiker onbekend).'
+
+        # Generate a unique token for this specific notification
+        token = str(uuid.uuid4())
+        active_close_token = token
 
         # Add an action button to the notification
         headers = {
             'Title': title,
-            'Actions': f'http, Sluiten, https://ntfy.sh/{NTFY_TOPIC}, body=REMOTE_CLOSE_COMMAND, method=POST'
+            'Actions': f'http, Sluiten, https://ntfy.sh/{NTFY_TOPIC}, body=CLOSE_TOKEN_{token}, method=POST'
         }
 
         logging.info(f'Sending notification to ntfy topic: {NTFY_TOPIC}')
@@ -202,13 +209,14 @@ def reed_open_door_closed():
         door_open_timer.cancel()
         logging.info('Cancelling previous door open timer.')
 
-    logging.info('Starting 30-second timer for door open notification.')
-    door_open_timer = Timer(30, send_ntfy_notification)
+    logging.info('Starting 60-second timer for door open notification.')
+    door_open_timer = Timer(120, send_ntfy_notification)
     door_open_timer.start()
 
 
 def listen_for_ntfy_commands():
     """Listens to the ntfy topic for remote commands."""
+    global active_close_token
     if not NTFY_TOPIC:
         return
 
@@ -220,10 +228,22 @@ def listen_for_ntfy_commands():
             for line in resp.iter_lines():
                 if line:
                     data = json.loads(line)
-                    # Check if this is a message event and contains our secret command
-                    if data.get('event') == 'message' and data.get('message') == 'REMOTE_CLOSE_COMMAND':
-                        logging.info("Received remote close command!")
+                    event_type = data.get('event')
+                    message = data.get('message', '')
+
+                    # Check if this is a message event and contains a token command
+                    if event_type == 'message' and message.startswith('CLOSE_TOKEN_'):
+                        received_token = message.replace('CLOSE_TOKEN_', '')
                         
+                        if received_token != active_close_token:
+                            logging.warning("Remote command ignored: Invalid or expired token.")
+                            continue
+
+                        logging.info("Valid remote close token received!")
+                        
+                        # Invalidate token immediately so it cannot be used again
+                        active_close_token = None
+
                         # SAFETY CHECK: Only toggle if the door is NOT closed (reed switch not pressed)
                         if reed_closed_door and not reed_closed_door.is_pressed:
                             logging.info("Safety check passed: Door is open. Closing now.")
