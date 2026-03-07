@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys
-
+import logging
 from concurrent.futures import ThreadPoolExecutor
 from time import sleep
 
@@ -9,12 +9,16 @@ from gpiozero import Button
 from gpiozero import OutputDevice
 from mfrc522 import SimpleMFRC522
 
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 try:
     from RPi import GPIO
 except ImportError:
+    logging.warning("RPi.GPIO not found, using fake_rpi")
     from fake_rpi.RPi import GPIO
 
-print('Press Control + C to exit the program')
+logging.info('Press Control + C to exit the program')
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
 RELAY_PIN = 17
@@ -35,15 +39,15 @@ def run_io_tasks_in_parallel(tasks):
 
 def set_relay(status):
     if status:
-        print("Setting relay: ON")
+        logging.info("Setting relay: ON")
         relay.on()
     else:
-        print("Setting relay: OFF")
+        logging.info("Setting relay: OFF")
         relay.off()
 
 
 def toggle_relay():
-    print("Toggling relay")
+    logging.info("Toggling relay")
     relay.toggle()
     sleep(.5)
     relay.toggle()
@@ -65,26 +69,26 @@ def initiate_reed_2_state():
 
 def initiate_nfc_reader():
     reader = SimpleMFRC522()
-    while 1:
+    while True:
         tag_id, tag_text = reader.read()
-        print(tag_id)
-        print(tag_text)
+        logging.info(f"Tag ID: {tag_id}")
+        logging.info(f"Tag Text: {tag_text}")
 
 
 def reed_1_open():
-    print('Read contact 1 is open.')
+    logging.info('Read contact 1 is open.')
 
 
 def reed_1_closed():
-    print('Read contact 1 is closed.')
+    logging.info('Read contact 1 is closed.')
 
 
 def reed_2_open():
-    print('Read contact 2 is open.')
+    logging.info('Read contact 2 is open.')
 
 
 def reed_2_closed():
-    print('Read contact 2 is closed.')
+    logging.info('Read contact 2 is closed.')
 
 
 def test_io():
@@ -92,21 +96,24 @@ def test_io():
         toggle_relay()
 
 
-try:
-    set_relay(False)
-    reed1.when_released = reed_1_open
-    reed1.when_pressed = reed_1_closed
-    initiate_reed_1_state()
-    reed2.when_released = reed_2_open
-    reed2.when_pressed = reed_2_closed
-    initiate_reed_2_state()
-    run_io_tasks_in_parallel([
-        lambda: initiate_nfc_reader(),
-        lambda: test_io(),
-    ])
+if __name__ == "__main__":
+    try:
+        set_relay(False)
+        reed1.when_released = reed_1_open
+        reed1.when_pressed = reed_1_closed
+        initiate_reed_1_state()
+        reed2.when_released = reed_2_open
+        reed2.when_pressed = reed_2_closed
+        initiate_reed_2_state()
+        run_io_tasks_in_parallel([
+            lambda: initiate_nfc_reader(),
+            lambda: test_io(),
+        ])
 
-
-except KeyboardInterrupt:  # Stops program when "Control + C" is entered
-    set_relay(False)
-    GPIO.cleanup()
-    sys.exit(0)
+    except KeyboardInterrupt:  # Stops program when "Control + C" is entered
+        set_relay(False)
+        # GPIO.cleanup() # gpiozero handles cleanup automatically usually, but if RPi.GPIO is used directly it might be needed.
+        # However, since we use gpiozero objects, explicit cleanup of RPi.GPIO might conflict or be redundant.
+        # If fake_rpi is used, it might not have cleanup.
+        logging.info("Program terminated manually")
+        sys.exit(0)

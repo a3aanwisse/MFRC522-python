@@ -3,15 +3,13 @@
 
 import logging
 import sys
-
-import requests
 import time
 import configparser
 from concurrent.futures import ThreadPoolExecutor
 from threading import Timer
 
-from gpiozero import Button
-from gpiozero import OutputDevice
+import requests
+from gpiozero import Button, OutputDevice
 from mfrc522 import SimpleMFRC522
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
@@ -25,19 +23,20 @@ NTFY_TOPIC = None
 
 continue_reading = True
 allowed_cards = {}
-last_used_card_id = None # We only need to know if a card was used, not the phone number
+last_used_card_id = None  # We only need to know if a card was used, not the phone number
 
-relay: OutputDevice
-reed_closed_door: Button
-reed_open_door: Button
+relay: OutputDevice = None
+reed_closed_door: Button = None
+reed_open_door: Button = None
 door_open_timer: Timer = None
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 def setup(config):
     """Sets up the controller with the given configuration."""
     global relay, VALID_CARDS_FILE, NTFY_TOPIC
-    
+
     try:
         VALID_CARDS_FILE = config.get('paths', 'valid_cards_file')
         NTFY_TOPIC = config.get('ntfy', 'topic')
@@ -89,19 +88,26 @@ def get_allowed_cards():
 def add_allowed_card(card_id):
     """Adds a new card ID to the file."""
     card_id_str = str(card_id)
-    with open(VALID_CARDS_FILE, 'a') as file:
-        file.write(f'\n{card_id_str}')
-    logging.info(f'Writing card id {card_id_str} to file.')
-    read_allowed_cards()
-    return True
+    try:
+        with open(VALID_CARDS_FILE, 'a') as file:
+            file.write(f'\n{card_id_str}')
+        logging.info(f'Writing card id {card_id_str} to file.')
+        read_allowed_cards()
+        return True
+    except Exception as e:
+        logging.error(f"Failed to write card ID to file: {e}")
+        return False
 
 
 def toggle_relay():
     logging.info('Toggling relay')
-    relay.toggle()
-    time.sleep(.5)
-    relay.toggle()
-    time.sleep(1.5)
+    if relay:
+        relay.toggle()
+        time.sleep(.5)
+        relay.toggle()
+        time.sleep(1.5)
+    else:
+        logging.error("Relay not initialized")
 
 
 def setup_reed_contacts():
@@ -116,14 +122,14 @@ def setup_reed_contacts():
 
 
 def read_reed_closed_door():
-    if reed_closed_door.value == 0:
+    if reed_closed_door and reed_closed_door.value == 0:
         return 'garage door is opening / open'
     else:
         return 'garage door is closed'
 
 
 def read_reed_open_door():
-    if reed_open_door.value == 0:
+    if reed_open_door and reed_open_door.value == 0:
         return 'garage door is closing / closed'
     else:
         return 'garage door is fully open'
@@ -158,7 +164,7 @@ def send_ntfy_notification():
         logging.error('ntfy topic is not configured in config.ini. Cannot send notification.')
         return
 
-    if reed_open_door.is_pressed:
+    if reed_open_door and reed_open_door.is_pressed:
         title = 'Garage Door Alert'
         message = 'The garage door has been open for more than 30 seconds!'
 
@@ -187,7 +193,7 @@ def reed_open_door_closed():
     if door_open_timer and door_open_timer.is_alive():
         door_open_timer.cancel()
         logging.info('Cancelling previous door open timer.')
-    
+
     logging.info('Starting 30-second timer for door open notification.')
     door_open_timer = Timer(30, send_ntfy_notification)
     door_open_timer.start()
@@ -199,12 +205,15 @@ def start_listening():
     reader = SimpleMFRC522()
     logging.info('Started NFC reader')
     while continue_reading:
-        (tag_id, tag_text) = reader.read()
-        tag_id_str = str(tag_id)
-        if tag_id_str in allowed_cards:
-            last_used_card_id = tag_id_str
-            logging.info(f'ACCESS FOR CARD {tag_id_str}')
-            toggle_relay()
-        else:
-            logging.info(f'ACCESS BLOCKED FOR CARD {tag_id_str}')
-
+        try:
+            (tag_id, tag_text) = reader.read()
+            tag_id_str = str(tag_id)
+            if tag_id_str in allowed_cards:
+                last_used_card_id = tag_id_str
+                logging.info(f'ACCESS FOR CARD {tag_id_str}')
+                toggle_relay()
+            else:
+                logging.info(f'ACCESS BLOCKED FOR CARD {tag_id_str}')
+        except Exception as e:
+            logging.error(f"Error reading NFC tag: {e}")
+            time.sleep(1) # Prevent tight loop on error

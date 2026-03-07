@@ -5,7 +5,7 @@
 # It is also capable of updating itself.
 
 # Navigate to the script's directory to ensure correct relative paths
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 
 # The main application loop
 while true; do

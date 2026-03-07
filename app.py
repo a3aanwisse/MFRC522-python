@@ -3,18 +3,17 @@ import sys
 import os
 import configparser
 import logging
+import threading
+from flask import Flask, render_template, request, redirect, url_for, flash
+from flask_httpauth import HTTPBasicAuth
+from werkzeug.security import generate_password_hash, check_password_hash
+import controller
 
 # --- Basic Logging Configuration ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Set up mocks and get config path.
 IS_DEVELOPMENT, CONFIG_FILE_PATH = dev_mocks.setup_development_mode()
-
-from flask import Flask, render_template, request, redirect, url_for, flash
-from flask_httpauth import HTTPBasicAuth
-from werkzeug.security import generate_password_hash, check_password_hash
-import threading
-import controller
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -76,8 +75,10 @@ def manage_cards():
             flash('Card ID is required.', 'error')
         else:
             # The controller now handles adding the card ID to the list
-            controller.add_allowed_card(card_id)
-            flash(f'Successfully added card {card_id}.', 'success')
+            if controller.add_allowed_card(card_id):
+                flash(f'Successfully added card {card_id}.', 'success')
+            else:
+                flash(f'Failed to add card {card_id}. Check logs.', 'error')
         
         return redirect(url_for('manage_cards'))
 
@@ -113,13 +114,13 @@ def read_reed_open_door():
 
 if __name__ == '__main__':
     try:
+        # Pass the loaded config object to the controller
+        controller.setup(config)
+
         app_thread = threading.Thread(
             target=lambda: app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False))
         app_thread.daemon = True
         app_thread.start()
-
-        # Pass the loaded config object to the controller
-        controller.setup(config)
 
         if not IS_DEVELOPMENT:
             logging.info('Starting NFC listener on the Raspberry Pi.')
