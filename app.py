@@ -6,6 +6,7 @@ import logging
 import threading
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_httpauth import HTTPBasicAuth
+from waitress import serve
 from werkzeug.security import generate_password_hash, check_password_hash
 import controller
 
@@ -118,7 +119,6 @@ if __name__ == '__main__':
         controller.setup(config)
 
         if not IS_DEVELOPMENT:
-            from waitress import serve
             logging.info('Starting production server with Waitress...')
             
             # Run waitress in a separate thread so we can also run the NFC listener
@@ -130,7 +130,6 @@ if __name__ == '__main__':
 
             logging.info('Starting NFC listener on the Raspberry Pi.')
             logging.info('To install production dependencies, run: pip install -r requirements.txt')
-            controller.start_listening()
         else:
             logging.info('Running in development mode with Flask dev server.')
             logging.info('To install development dependencies, run: pip install -r requirements-dev.txt')
@@ -141,6 +140,8 @@ if __name__ == '__main__':
             app_thread.start()
 
             app_thread.join()
+
+        controller.start_listening()
 
     except KeyboardInterrupt:
         logging.info('Program terminated manually!')
