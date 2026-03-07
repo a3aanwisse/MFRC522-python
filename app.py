@@ -6,7 +6,6 @@ import logging
 import threading
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_httpauth import HTTPBasicAuth
-from waitress import serve
 from werkzeug.security import generate_password_hash, check_password_hash
 import controller
 
@@ -120,6 +119,7 @@ if __name__ == '__main__':
 
         if not IS_DEVELOPMENT:
             logging.info('Starting production server with Waitress...')
+            from waitress import serve
             
             # Run waitress in a separate thread so we can also run the NFC listener
             server_thread = threading.Thread(
