@@ -22,7 +22,7 @@ while true; do
         echo "UPDATE: Application signaled for an update. Pulling latest code from git..."
         git pull
         echo "UPDATE: Git pull complete. Restarting the launcher to apply any updates to itself as well..."
-        pip3 install -r requirements.txt
+        # pip3 install -r requirements.txt
         # Use exec to replace the current process with a new one from the updated file on disk.
         # This ensures that if launcher.sh itself was updated, the new version is used.
         exec ./launcher.sh
