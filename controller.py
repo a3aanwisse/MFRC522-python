@@ -4,6 +4,8 @@
 import logging
 import sys
 import time
+import json
+import threading
 import configparser
 from concurrent.futures import ThreadPoolExecutor
 from threading import Timer
@@ -173,12 +175,18 @@ def send_ntfy_notification():
         else:
             message += ' Last opened manually (user unknown).'
 
+        # Add an action button to the notification
+        headers = {
+            'Title': title,
+            'Actions': f'http, Sluiten, https://ntfy.sh/{NTFY_TOPIC}, body=REMOTE_CLOSE_COMMAND, method=POST'
+        }
+
         logging.info(f'Sending notification to ntfy topic: {NTFY_TOPIC}')
         try:
             requests.post(
                 f'https://ntfy.sh/{NTFY_TOPIC}',
                 data=message.encode(encoding='utf-8'),
-                headers={'Title': title}
+                headers=headers
             )
             logging.info('Successfully sent ntfy notification.')
         except Exception as e:
@@ -199,9 +207,40 @@ def reed_open_door_closed():
     door_open_timer.start()
 
 
+def listen_for_ntfy_commands():
+    """Listens to the ntfy topic for remote commands."""
+    if not NTFY_TOPIC:
+        return
+
+    logging.info(f"Starting remote command listener on topic: {NTFY_TOPIC}")
+    while True:
+        try:
+            # Listen to the stream for JSON data
+            resp = requests.get(f'https://ntfy.sh/{NTFY_TOPIC}/json', stream=True, timeout=60)
+            for line in resp.iter_lines():
+                if line:
+                    data = json.loads(line)
+                    # Check if this is a message event and contains our secret command
+                    if data.get('event') == 'message' and data.get('message') == 'REMOTE_CLOSE_COMMAND':
+                        logging.info("Received remote close command!")
+                        
+                        # SAFETY CHECK: Only toggle if the door is NOT closed (reed switch not pressed)
+                        if reed_closed_door and not reed_closed_door.is_pressed:
+                            logging.info("Safety check passed: Door is open. Closing now.")
+                            toggle_relay()
+                        else:
+                            logging.warning("Remote command ignored: Door is already closed.")
+        except Exception as e:
+            logging.error(f"Error in remote command listener: {e}")
+            time.sleep(10) # Wait before reconnecting
+
+
 def start_listening():
     global last_used_card_id
     logging.info('Starting NFC reader...')
+    # Start the remote listener in a background thread
+    threading.Thread(target=listen_for_ntfy_commands, daemon=True).start()
+    
     reader = SimpleMFRC522()
     logging.info('Started NFC reader')
     while continue_reading:
