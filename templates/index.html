@@ -1,12 +1,89 @@
-<html>
+<!DOCTYPE html>
+<html lang="nl">
 <head>
-    <title>Garage controller</title>
-    <link rel="stylesheet" href='/static/style.css' />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garage Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; padding-top: 2rem; }
+        .menu-card { 
+            transition: transform 0.2s, box-shadow 0.2s; 
+            cursor: pointer; 
+            height: 100%; 
+            border: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .menu-card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1); 
+        }
+        .card-icon { font-size: 3rem; margin-bottom: 1rem; }
+        a { text-decoration: none; color: inherit; }
+        /* Zorg dat de update knop eruit ziet als de rest */
+        .btn-card { background: white; text-align: left; width: 100%; padding: 0; }
+    </style>
 </head>
 <body>
-Hello {{ username }}
-<h2>Menu</h2>
-<a href="/test">Test hardware</a>
-<a href="/cards">Cards</a>
+    <div class="container">
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold text-primary">Garage Controller</h1>
+            <p class="lead text-muted">Ingelogd als: <strong>{{ username }}</strong></p>
+        </div>
+
+        <div class="row g-4">
+            <!-- Statistieken -->
+            <div class="col-md-6 col-lg-3">
+                <a href="/stats">
+                    <div class="card menu-card text-center p-4">
+                        <div class="card-body">
+                            <div class="card-icon">📊</div>
+                            <h4 class="card-title">Statistieken</h4>
+                            <p class="card-text text-muted">Bekijk historie en gebruik.</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Kaarten Beheer -->
+            <div class="col-md-6 col-lg-3">
+                <a href="/cards">
+                    <div class="card menu-card text-center p-4">
+                        <div class="card-body">
+                            <div class="card-icon">🪪</div>
+                            <h4 class="card-title">Kaarten</h4>
+                            <p class="card-text text-muted">Beheer NFC toegangskaarten.</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Hardware Test -->
+            <div class="col-md-6 col-lg-3">
+                <a href="/test">
+                    <div class="card menu-card text-center p-4">
+                        <div class="card-body">
+                            <div class="card-icon">🛠️</div>
+                            <h4 class="card-title">Testen</h4>
+                            <p class="card-text text-muted">Test sensoren en relais.</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Update System -->
+            <div class="col-md-6 col-lg-3">
+                <form action="/update" method="post" onsubmit="return confirm('Weet je zeker dat je wilt updaten/herstarten?');" style="height: 100%;">
+                    <button type="submit" class="card menu-card btn-card text-center p-4 w-100">
+                        <div class="card-body">
+                            <div class="card-icon">🔄</div>
+                            <h4 class="card-title text-danger">Update</h4>
+                            <p class="card-text text-muted">Herstart de applicatie.</p>
+                        </div>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

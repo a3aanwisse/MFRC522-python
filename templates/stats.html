@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garage Statistieken</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; }
+        .stat-card { border-left: 5px solid #0d6efd; }
+        .stat-card.warning { border-left-color: #ffc107; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>📊 Statistieken</h1>
+            <a href="/" class="btn btn-secondary">Terug naar Home</a>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card stat-card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Totaal Geopend</h5>
+                        <p class="card-text display-4">{{ stats.total_opens }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card stat-card warning mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Lang Open Meldingen</h5>
+                        <p class="card-text display-4">{{ stats.long_open_events }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h3>Recente Activiteit</h3>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Tijdstip</th>
+                        <th>Actie</th>
+                        <th>Gebruiker / Info</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for event in stats.history %}
+                    <tr>
+                        <td>{{ event.timestamp }}</td>
+                        <td>
+                            <span class="badge {% if event.action == 'OPEN' %}bg-success{% elif event.action == 'CLOSE' %}bg-secondary{% else %}bg-warning text-dark{% endif %}">
+                                {{ event.action }}
+                            </span>
+                        </td>
+                        <td>{{ event.user }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

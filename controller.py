@@ -5,6 +5,8 @@ import logging
 import sys
 import time
 import json
+import os
+from datetime import datetime
 import uuid
 import threading
 import configparser
@@ -23,6 +25,7 @@ REED_CONTACT_OPEN_DOOR_PIN = 23
 # These will be set by the setup function from the config file
 VALID_CARDS_FILE = None
 NTFY_TOPIC = None
+STATS_FILE = None
 
 continue_reading = True
 allowed_cards = {}
@@ -33,17 +36,19 @@ relay: OutputDevice = None
 reed_closed_door: Button = None
 reed_open_door: Button = None
 door_open_timer: Timer = None
+stats_lock = threading.Lock()
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 def setup(config):
     """Sets up the controller with the given configuration."""
-    global relay, VALID_CARDS_FILE, NTFY_TOPIC
+    global relay, VALID_CARDS_FILE, NTFY_TOPIC, STATS_FILE
 
     try:
         VALID_CARDS_FILE = config.get('paths', 'valid_cards_file')
         NTFY_TOPIC = config.get('ntfy', 'topic')
+        STATS_FILE = config.get('paths', 'stats_file', fallback='garage_stats.json')
         logging.info('Successfully loaded paths and ntfy config.')
     except (configparser.NoSectionError, configparser.NoOptionError) as e:
         logging.error(f'Could not read configuration from config.ini: {e}')
@@ -103,6 +108,39 @@ def add_allowed_card(card_id):
         return False
 
 
+def log_stat_event(action, user=None):
+    """Logs an event to the stats file."""
+    event = {
+        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'action': action,
+        'user': user if user else 'Handmatig/Onbekend'
+    }
+    
+    with stats_lock:
+        data = {'total_opens': 0, 'long_open_events': 0, 'history': []}
+        
+        # Load existing
+        if os.path.exists(STATS_FILE):
+            try:
+                with open(STATS_FILE, 'r') as f:
+                    data = json.load(f)
+            except Exception as e:
+                logging.error(f"Error reading stats file: {e}")
+
+        # Update stats
+        if action == 'OPEN':
+            data['total_opens'] = data.get('total_opens', 0) + 1
+        elif action == 'LONG_OPEN_WARNING':
+            data['long_open_events'] = data.get('long_open_events', 0) + 1
+            
+        # Add to history (keep last 100 events)
+        data.setdefault('history', []).insert(0, event)
+        data['history'] = data['history'][:100]
+
+        with open(STATS_FILE, 'w') as f:
+            json.dump(data, f, indent=4)
+
+
 def toggle_relay():
     logging.info('Toggling relay')
     if relay:
@@ -142,6 +180,10 @@ def read_reed_open_door():
 def reed_closed_door_open():
     global last_used_card_id
     logging.info('Closed door reed contact is open - garage door is opening/open.')
+    
+    # Log the event BEFORE resetting the card ID
+    log_stat_event('OPEN', last_used_card_id)
+    
     # Reset last used card on any new door opening event to detect manual opens
     last_used_card_id = None
     logging.info('Reset last used card ID due to new door opening event.')
@@ -150,6 +192,7 @@ def reed_closed_door_open():
 def reed_closed_door_closed():
     global door_open_timer
     logging.info('Closed door reed contact is closed - garage door is closed.')
+    log_stat_event('CLOSE')
     if door_open_timer and door_open_timer.is_alive():
         door_open_timer.cancel()
         logging.info('Cancelled door open timer as door is now closed.')
@@ -184,6 +227,7 @@ def send_ntfy_notification():
     if reed_open_door and reed_open_door.is_pressed:
         title = 'Garagedeur alarm!'
         message = 'De garagedeur is meer dan 2 minuten open!'
+        log_stat_event('LONG_OPEN_WARNING')
 
         if last_used_card_id:
             message += f' Laatst opengemaakt met kaart: {last_used_card_id}.'
@@ -253,6 +297,17 @@ def listen_for_ntfy_commands():
         except Exception as e:
             logging.error(f"Error in remote command listener: {e}")
             time.sleep(10) # Wait before reconnecting
+
+
+def get_stats():
+    """Returns the current statistics."""
+    if os.path.exists(STATS_FILE):
+        try:
+            with open(STATS_FILE, 'r') as f:
+                return json.load(f)
+        except:
+            pass
+    return {'total_opens': 0, 'long_open_events': 0, 'history': []}
 
 
 def start_listening():

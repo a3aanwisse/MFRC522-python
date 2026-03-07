@@ -1,27 +1,38 @@
-<html>
+<!DOCTYPE html>
+<html lang="nl">
 <head>
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"> </script>
-    <script type=text/javascript>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hardware Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <style>
+        body { padding-top: 2rem; background-color: #f8f9fa; }
+        .status-text { font-weight: bold; font-family: monospace; }
+    </style>
+    <script>
         $(function() {
             $("#toggle_relay").click(function (event) {
                 toggle_relay();
-            }),
+            });
             $("#read_reed_closed_door").click(function (event) {
                 read_reed_closed_door();
-            }),
+            });
             $("#read_reed_open_door").click(function (event) {
                 read_reed_open_door();
-            })
+            });
         });
+
         function toggle_relay() {
             $.ajax({
                url: '/relay/toggle',
                type: 'PUT',
                success: function(response) {
-                   $("#relay_status").text('toggled');
+                   $("#relay_status").text('Toggled (Actie uitgevoerd)');
                }
             });
         }
+
         function read_reed_closed_door() {
             $.ajax({
                url: '/reed/closed-door',
@@ -31,6 +42,7 @@
                }
             });
         }
+
         function read_reed_open_door() {
             $.ajax({
                url: '/reed/open-door',
@@ -40,20 +52,62 @@
                }
             });
         }
+
+        // Initial load
         read_reed_closed_door();
         read_reed_open_door();
     </script>
 </head>
 <body>
-<h1>Hardware test</h1>
-<h2>Relay</h2>
-<p>Status: <div id="relay_status">unknown</div></p>
-<input type="button" id="toggle_relay" value="Toggle relay" />
-<h2>Reed contact closed door</h2>
-<p>Status: <div id="reed_status_closed_door">unknown</div></p>
-<input type="button" id="read_reed_closed_door" value="Read status of closed door reed contact " />
-<h2>Reed contact open door</h2>
-<p>Status: <div id="reed_status_open_door">unknown</div></p>
-<input type="button" id="read_reed_open_door" value="Read status of open door reed contact" />
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>🛠️ Hardware Test</h1>
+            <a href="/" class="btn btn-secondary">Terug naar Home</a>
+        </div>
+
+        <div class="row g-4">
+            <!-- Relay Card -->
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Relais (Motor)</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <p class="card-text">Laatste actie:</p>
+                        <p class="status-text text-primary" id="relay_status">Wachten...</p>
+                        <button id="toggle_relay" class="btn btn-danger w-100 mt-3">Schakel Relais</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reed Closed Card -->
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0">Sensor: Dicht</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <p class="card-text">Huidige status:</p>
+                        <p class="status-text text-success" id="reed_status_closed_door">Laden...</p>
+                        <button id="read_reed_closed_door" class="btn btn-outline-success w-100 mt-3">Lees Status</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reed Open Card -->
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="card-title mb-0">Sensor: Open</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <p class="card-text">Huidige status:</p>
+                        <p class="status-text text-warning" id="reed_status_open_door">Laden...</p>
+                        <button id="read_reed_open_door" class="btn btn-outline-warning w-100 mt-3">Lees Status</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

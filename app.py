@@ -87,6 +87,13 @@ def manage_cards():
     return render_template('cards.html', cards=cards)
 
 
+@app.route('/stats')
+@auth.login_required
+def stats():
+    data = controller.get_stats()
+    return render_template('stats.html', stats=data)
+
+
 @app.route('/test')
 @auth.login_required
 def test():
