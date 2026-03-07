@@ -18,7 +18,7 @@ import requests
 from gpiozero import Button, OutputDevice
 from mfrc522 import SimpleMFRC522
 
-VERSION = "1.4.4"
+VERSION = "1.5.0"
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
 RELAY_PIN = 17
@@ -42,6 +42,7 @@ reed_open_door: Button = None
 door_open_timer: Timer = None
 stats_lock = threading.Lock()
 stat_listeners = [] # List of queues to notify on updates
+hardware_listeners = [] # List of queues for hardware status updates
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -161,6 +162,27 @@ def log_stat_event(action, user=None):
             stat_listeners.remove(d)
 
 
+def broadcast_hardware_update():
+    """Sends the current hardware status to all connected listeners."""
+    status = {
+        'relay': 'Klaar voor actie', # Relay is stateless mostly, but we send update to confirm connectivity
+        'reed_closed': read_reed_closed_door(),
+        'reed_open': read_reed_open_door(),
+        'timestamp': datetime.now().strftime('%H:%M:%S')
+    }
+    
+    dead_listeners = []
+    for q in hardware_listeners:
+        try:
+            q.put(status)
+        except:
+            dead_listeners.append(q)
+    
+    for d in dead_listeners:
+        if d in hardware_listeners:
+            hardware_listeners.remove(d)
+
+
 def toggle_relay():
     logging.info('Toggling relay')
     if relay:
@@ -168,6 +190,7 @@ def toggle_relay():
         time.sleep(.5)
         relay.toggle()
         time.sleep(1.5)
+        broadcast_hardware_update() # Notify UI that toggle is done
     else:
         logging.error("Relay not initialized")
 
@@ -207,6 +230,7 @@ def reed_closed_door_open():
     # Reset last used card on any new door opening event to detect manual opens
     last_used_card_id = None
     logging.info('Reset last used card ID due to new door opening event.')
+    broadcast_hardware_update()
 
 
 def reed_closed_door_closed():
@@ -216,6 +240,7 @@ def reed_closed_door_closed():
     if door_open_timer and door_open_timer.is_alive():
         door_open_timer.cancel()
         logging.info('Cancelled door open timer as door is now closed.')
+    broadcast_hardware_update()
 
 
 def reed_open_door_open():
@@ -224,6 +249,7 @@ def reed_open_door_open():
     if door_open_timer and door_open_timer.is_alive():
         door_open_timer.cancel()
         logging.info('Cancelled door open timer.')
+    broadcast_hardware_update()
 
 
 def reed_open_door_closed():
@@ -236,6 +262,7 @@ def reed_open_door_closed():
     logging.info(f'Starting {DOOR_OPEN_TIMEOUT}-second timer for door open notification.')
     door_open_timer = Timer(DOOR_OPEN_TIMEOUT, send_ntfy_notification)
     door_open_timer.start()
+    broadcast_hardware_update()
 
 
 def send_ntfy_notification():
@@ -350,6 +377,17 @@ def remove_stat_listener(q):
     """Removes a listener queue."""
     if q in stat_listeners:
         stat_listeners.remove(q)
+
+def register_hardware_listener():
+    """Creates a queue for a new hardware listener."""
+    q = queue.Queue()
+    hardware_listeners.append(q)
+    return q
+
+def remove_hardware_listener(q):
+    """Removes a hardware listener queue."""
+    if q in hardware_listeners:
+        hardware_listeners.remove(q)
 
 def start_listening():
     global last_used_card_id

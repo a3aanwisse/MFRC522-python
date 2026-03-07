@@ -11,15 +11,25 @@
         .status-text { font-weight: bold; font-family: monospace; }
     </style>
     <script>
+        // Setup Server-Sent Events for real-time updates
+        const evtSource = new EventSource("/stream/hardware");
+
+        evtSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            
+            $("#reed_status_closed_door").text(data.reed_closed);
+            $("#reed_status_open_door").text(data.reed_open);
+            
+            // Update timestamp or relay status if needed
+            if(data.relay !== 'Klaar voor actie' && data.relay !== 'Verbonden') {
+                 $("#relay_status").text(data.relay);
+            }
+        };
+
         $(function() {
             $("#toggle_relay").click(function (event) {
+                $("#relay_status").text("Schakelen...");
                 toggle_relay();
-            });
-            $("#read_reed_closed_door").click(function (event) {
-                read_reed_closed_door();
-            });
-            $("#read_reed_open_door").click(function (event) {
-                read_reed_open_door();
             });
         });
 
@@ -29,33 +39,10 @@
                type: 'PUT',
                success: function(response) {
                    $("#relay_status").text('Toggled (Actie uitgevoerd)');
+                   // De stream zal kort hierna de status updaten
                }
             });
         }
-
-        function read_reed_closed_door() {
-            $.ajax({
-               url: '/reed/closed-door',
-               type: 'PUT',
-               success: function(response) {
-                   $("#reed_status_closed_door").text(response);
-               }
-            });
-        }
-
-        function read_reed_open_door() {
-            $.ajax({
-               url: '/reed/open-door',
-               type: 'PUT',
-               success: function(response) {
-                   $("#reed_status_open_door").text(response);
-               }
-            });
-        }
-
-        // Initial load
-        read_reed_closed_door();
-        read_reed_open_door();
     </script>
 </head>
 <body>
@@ -89,7 +76,6 @@
                     <div class="card-body text-center">
                         <p class="card-text">Huidige status:</p>
                         <p class="status-text text-success" id="reed_status_closed_door">Laden...</p>
-                        <button id="read_reed_closed_door" class="btn btn-outline-success w-100 mt-3">Lees Status</button>
                     </div>
                 </div>
             </div>
@@ -103,7 +89,6 @@
                     <div class="card-body text-center">
                         <p class="card-text">Huidige status:</p>
                         <p class="status-text text-warning" id="reed_status_open_door">Laden...</p>
-                        <button id="read_reed_open_door" class="btn btn-outline-warning w-100 mt-3">Lees Status</button>
                     </div>
                 </div>
             </div>

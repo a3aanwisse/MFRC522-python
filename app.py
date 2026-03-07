@@ -126,6 +126,30 @@ def stream_stats():
     return Response(generate(), mimetype='text/event-stream')
 
 
+@app.route('/stream/hardware')
+@auth.login_required
+def stream_hardware():
+    def generate():
+        q = controller.register_hardware_listener()
+        try:
+            # Send initial state immediately
+            initial_state = {
+                'relay': 'Verbonden',
+                'reed_closed': controller.read_reed_closed_door(),
+                'reed_open': controller.read_reed_open_door(),
+                'timestamp': 'Nu'
+            }
+            yield f"data: {json.dumps(initial_state)}\n\n"
+            
+            while True:
+                data = q.get()
+                yield f"data: {json.dumps(data)}\n\n"
+        finally:
+            controller.remove_hardware_listener(q)
+
+    return Response(generate(), mimetype='text/event-stream')
+
+
 @app.route('/test')
 @auth.login_required
 def test():
