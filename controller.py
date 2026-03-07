@@ -315,6 +315,12 @@ def get_stats():
 def start_listening():
     global last_used_card_id
     logging.info('Starting NFC reader...')
+
+    # Check if door is already open upon startup (e.g. after a reboot/update)
+    if reed_open_door and reed_open_door.is_pressed:
+        logging.info("Startup check: Door is detected as open. Resuming notification timer.")
+        reed_open_door_closed()
+
     # Start the remote listener in a background thread
     threading.Thread(target=listen_for_ntfy_commands, daemon=True).start()
     
