@@ -17,6 +17,8 @@ import requests
 from gpiozero import Button, OutputDevice
 from mfrc522 import SimpleMFRC522
 
+VERSION = "1.2.0"
+
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
 RELAY_PIN = 17
 REED_CONTACT_CLOSED_DOOR_PIN = 22

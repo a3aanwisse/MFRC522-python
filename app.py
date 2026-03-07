@@ -52,6 +52,11 @@ def verify_password(username, password):
     return False
 
 
+@app.context_processor
+def inject_version():
+    return dict(version=controller.VERSION)
+
+
 @app.route('/')
 @auth.login_required
 def index():

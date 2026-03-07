@@ -22,9 +22,30 @@
         a { text-decoration: none; color: inherit; }
         /* Zorg dat de update knop eruit ziet als de rest */
         .btn-card { background: white; text-align: left; width: 100%; padding: 0; }
+        
+        /* Update Overlay Styles */
+        #updateOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 9999;
+            text-align: center;
+            padding-top: 20vh;
+        }
+        .spinner-border { width: 3rem; height: 3rem; }
     </style>
 </head>
 <body>
+    <!-- Update Loading Screen -->
+    <div id="updateOverlay">
+        <div class="spinner-border text-primary mb-3" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <h2 class="text-primary">Systeem wordt bijgewerkt...</h2>
+        <p class="lead text-muted">Even geduld, de pagina herlaadt automatisch zodra het systeem terug is.</p>
+    </div>
+
     <div class="container">
         <div class="text-center mb-5">
             <h1 class="display-4 fw-bold text-primary">Garage Controller</h1>
@@ -73,17 +94,50 @@
 
             <!-- Update System -->
             <div class="col-md-6 col-lg-3">
-                <form action="/update" method="post" onsubmit="return confirm('Weet je zeker dat je wilt updaten/herstarten?');" style="height: 100%;">
-                    <button type="submit" class="card menu-card btn-card text-center p-4 w-100">
-                        <div class="card-body">
-                            <div class="card-icon">🔄</div>
-                            <h4 class="card-title text-danger">Update</h4>
-                            <p class="card-text text-muted">Herstart de applicatie.</p>
-                        </div>
-                    </button>
-                </form>
+                <button onclick="startUpdate()" class="card menu-card btn-card text-center p-4 w-100">
+                    <div class="card-body">
+                        <div class="card-icon">🔄</div>
+                        <h4 class="card-title text-danger">Update</h4>
+                        <p class="card-text text-muted">Herstart de applicatie.</p>
+                    </div>
+                </button>
             </div>
         </div>
+        
+        <footer class="text-center mt-5 text-muted">
+            <small>Versie: {{ version }}</small>
+        </footer>
     </div>
+
+    <script>
+        function startUpdate() {
+            if (!confirm('Weet je zeker dat je wilt updaten/herstarten?')) return;
+
+            // Toon laadscherm
+            document.getElementById('updateOverlay').style.display = 'block';
+
+            // Stuur update commando
+            fetch('/update', { method: 'POST' })
+                .catch(err => console.log("Server waarschijnlijk herstart...", err));
+
+            // Wacht 5 seconden en begin dan met pingen
+            setTimeout(checkServerStatus, 5000);
+        }
+
+        function checkServerStatus() {
+            fetch('/', { method: 'HEAD' })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        setTimeout(checkServerStatus, 2000);
+                    }
+                })
+                .catch(() => {
+                    // Nog steeds offline, probeer opnieuw over 2 seconden
+                    setTimeout(checkServerStatus, 2000);
+                });
+        }
+    </script>
 </body>
 </html>
