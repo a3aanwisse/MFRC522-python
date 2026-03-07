@@ -21,7 +21,7 @@ app.secret_key = os.urandom(24)
 auth = HTTPBasicAuth()
 
 # --- Load Configuration from config file ---
-config = configparser.ConfigParser()
+config = configparser.ConfigParser(interpolation=None)
 users = {}
 try:
     if not os.path.exists(CONFIG_FILE_PATH):
