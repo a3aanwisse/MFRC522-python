@@ -175,6 +175,14 @@ def read_reed_open_door():
     return controller.read_reed_open_door()
 
 
+@app.route('/notify/test', methods=['POST'])
+@auth.login_required
+def test_notification():
+    # Run in a separate thread to prevent blocking the request (fetching camera image takes time)
+    threading.Thread(target=controller.send_ntfy_notification, args=(True,)).start()
+    return 'ok', 204
+
+
 if __name__ == '__main__':
     try:
         # Pass the loaded config object to the controller

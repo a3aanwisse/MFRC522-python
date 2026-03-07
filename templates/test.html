@@ -31,6 +31,9 @@
                 $("#relay_status").text("Schakelen...");
                 toggle_relay();
             });
+            $("#send_test_notification").click(function (event) {
+                send_test_notification();
+            });
         });
 
         function toggle_relay() {
@@ -41,6 +44,17 @@
                    $("#relay_status").text('Toggled (Actie uitgevoerd)');
                    // De stream zal kort hierna de status updaten
                }
+            });
+        }
+
+        function send_test_notification() {
+            const btn = $("#send_test_notification");
+            const originalText = btn.text();
+            btn.text("Versturen...").prop("disabled", true);
+            
+            $.post('/notify/test', function() {
+                btn.text("Verzonden!").prop("disabled", false);
+                setTimeout(() => btn.text(originalText), 2000);
             });
         }
     </script>
@@ -54,7 +68,7 @@
 
         <div class="row g-4">
             <!-- Relay Card -->
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="card h-100 shadow-sm">
                     <div class="card-header bg-primary text-white">
                         <h5 class="card-title mb-0">Relais (Motor)</h5>
@@ -68,7 +82,7 @@
             </div>
 
             <!-- Reed Closed Card -->
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="card h-100 shadow-sm">
                     <div class="card-header bg-success text-white">
                         <h5 class="card-title mb-0">Sensor: Dicht</h5>
@@ -81,7 +95,7 @@
             </div>
 
             <!-- Reed Open Card -->
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="card h-100 shadow-sm">
                     <div class="card-header bg-warning text-dark">
                         <h5 class="card-title mb-0">Sensor: Open</h5>
@@ -89,6 +103,20 @@
                     <div class="card-body text-center">
                         <p class="card-text">Huidige status:</p>
                         <p class="status-text text-warning" id="reed_status_open_door">Laden...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Test Card -->
+            <div class="col-md-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">Notificatie</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <p class="card-text">Test pushbericht & camera:</p>
+                        <p class="status-text text-info">Klaar</p>
+                        <button id="send_test_notification" class="btn btn-info text-white w-100 mt-3">Stuur Testbericht</button>
                     </div>
                 </div>
             </div>

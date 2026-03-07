@@ -15,10 +15,11 @@ from concurrent.futures import ThreadPoolExecutor
 from threading import Timer
 
 import requests
+from requests.auth import HTTPDigestAuth
 from gpiozero import Button, OutputDevice
 from mfrc522 import SimpleMFRC522
 
-VERSION = "1.5.0"
+VERSION = "1.7.0"
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
 RELAY_PIN = 17
@@ -30,6 +31,9 @@ VALID_CARDS_FILE = None
 NTFY_TOPIC = None
 STATS_FILE = None
 DOOR_OPEN_TIMEOUT = 120 # Default value in seconds
+CAMERA_URL = None
+CAMERA_USER = None
+CAMERA_PASS = None
 
 continue_reading = True
 allowed_cards = {}
@@ -49,13 +53,16 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 def setup(config):
     """Sets up the controller with the given configuration."""
-    global relay, VALID_CARDS_FILE, NTFY_TOPIC, STATS_FILE, DOOR_OPEN_TIMEOUT, VERSION
+    global relay, VALID_CARDS_FILE, NTFY_TOPIC, STATS_FILE, DOOR_OPEN_TIMEOUT, VERSION, CAMERA_URL, CAMERA_USER, CAMERA_PASS
 
     try:
         VALID_CARDS_FILE = config.get('paths', 'valid_cards_file')
         NTFY_TOPIC = config.get('ntfy', 'topic')
         DOOR_OPEN_TIMEOUT = config.getint('ntfy', 'door_open_timeout', fallback=120)
         STATS_FILE = config.get('paths', 'stats_file', fallback='stats.json')
+        CAMERA_URL = config.get('camera', 'url', fallback=None)
+        CAMERA_USER = config.get('camera', 'username', fallback=None)
+        CAMERA_PASS = config.get('camera', 'password', fallback=None)
         logging.info('Successfully loaded paths and ntfy config.')
     except (configparser.NoSectionError, configparser.NoOptionError) as e:
         logging.error(f'Could not read configuration from config.ini: {e}')
@@ -265,24 +272,29 @@ def reed_open_door_closed():
     broadcast_hardware_update()
 
 
-def send_ntfy_notification():
+def send_ntfy_notification(is_test=False):
     global active_close_token
     if not NTFY_TOPIC or NTFY_TOPIC == 'your_ntfy_topic_here':
         logging.error('ntfy topic is not configured in config.ini. Cannot send notification.')
         return
 
-    if reed_open_door and reed_open_door.is_pressed:
+    if is_test or (reed_open_door and reed_open_door.is_pressed):
         title = 'Garagedeur alarm!'
+        if is_test:
+            title = 'Test: Garagedeur Melding'
         
         # Create a friendly time string (e.g., "2 minuten" or "90 seconden")
         time_str = f"{int(DOOR_OPEN_TIMEOUT / 60)} minuten" if DOOR_OPEN_TIMEOUT % 60 == 0 else f"{DOOR_OPEN_TIMEOUT} seconden"
         
         message = f'De garagedeur is meer dan {time_str} open!'
-        log_stat_event('LONG_OPEN_WARNING')
+        if is_test:
+            message = f'Dit is een testbericht. De ingestelde timeout is {time_str}.'
+        else:
+            log_stat_event('LONG_OPEN_WARNING')
 
         if last_used_card_id:
             message += f' Laatst opengemaakt met kaart: {last_used_card_id}.'
-        else:
+        elif not is_test:
             message += ' Laatst handmatig geopend (gebruiker onbekend).'
 
         # Generate a unique token for this specific notification
@@ -299,13 +311,36 @@ def send_ntfy_notification():
             'Actions': f'http, Sluiten, https://ntfy.sh/{control_topic}, body=CLOSE_TOKEN_{token}, method=POST'
         }
 
+        # Try to fetch camera snapshot
+        image_data = None
+        if CAMERA_URL:
+            try:
+                logging.info(f"Fetching snapshot from {CAMERA_URL}...")
+                auth = None
+                if CAMERA_USER and CAMERA_PASS:
+                    auth = HTTPDigestAuth(CAMERA_USER, CAMERA_PASS)
+                
+                # Timeout is short to not block the main thread too long
+                resp = requests.get(CAMERA_URL, auth=auth, timeout=4)
+                if resp.status_code == 200:
+                    image_data = resp.content
+                    logging.info(f"Snapshot fetched successfully ({len(image_data)} bytes).")
+                else:
+                    logging.warning(f"Failed to fetch snapshot. Status code: {resp.status_code}")
+            except Exception as e:
+                logging.error(f"Error fetching snapshot: {e}")
+
         logging.info(f'Sending notification to ntfy topic: {NTFY_TOPIC}')
         try:
-            requests.post(
-                f'https://ntfy.sh/{NTFY_TOPIC}',
-                data=message.encode(encoding='utf-8'),
-                headers=headers
-            )
+            if image_data:
+                # Send image as body, message moves to header
+                headers['Message'] = message
+                headers['Filename'] = 'snapshot.jpg'
+                requests.post(f'https://ntfy.sh/{NTFY_TOPIC}', data=image_data, headers=headers)
+            else:
+                # Send text only
+                requests.post(f'https://ntfy.sh/{NTFY_TOPIC}', data=message.encode('utf-8'), headers=headers)
+                
             logging.info('Successfully sent ntfy notification.')
         except Exception as e:
             logging.error(f'Failed to send ntfy notification: {e}')

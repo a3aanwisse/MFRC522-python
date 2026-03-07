@@ -1,5 +1,9 @@
 # Agent Instructies
 
+
+## Platform
+Hou er rekening mee dat voorgestelde oplossing moet werken op een Raspberry Pi
+
 ## Versiebeheer
 Bij iedere aanpassing in de code moet het versienummer (`VERSION`) in `controller.py` worden aangepast volgens Semantic Versioning.
 
