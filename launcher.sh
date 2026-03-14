@@ -7,30 +7,51 @@
 APP_DIR=/home/pi/MFRC522-python
 HOME_DIR=/home/pi/dooropener
 
-# Navigate to the script's directory to ensure correct relative paths
-cd "$APP_DIR" || exit 1
+# Function to log messages to syslog
+log() {
+    echo "$1"
+    logger -t dooropener-launcher "$1"
+}
+
+log "================================================="
+log "INFO: Launcher script started."
+log "================================================="
+
+# Navigate to the application directory
+cd "$APP_DIR" || { log "CRITICAL: Failed to navigate to $APP_DIR. Exiting."; exit 1; }
 
 # The main application loop
 while true; do
-    # Launch the Python application.
-    # The config file is specified here for production deployment.
+    log "INFO: Starting python application..."
+    # The python app's output will be captured by the system journal via cron's configuration
     /usr/bin/python3 app.py --config "$HOME_DIR/config.ini"
 
-    # Capture the exit status of the Python script
     STATUS=$?
+    log "INFO: Python application exited with status $STATUS."
 
-    # Check the exit status to decide what to do next
-    if [ $STATUS -eq 10 ]; then
+    if [ "$STATUS" -eq 10 ]; then
         # Exit code 10 means: "Update and restart"
-        echo "UPDATE: Application signaled for an update. Pulling latest code from git..."
-        /usr/bin/git pull
-        echo "UPDATE: Git pull complete. Restarting the launcher to apply any updates to itself as well..."
-        # Use exec to replace the current process with a new one from the updated file on disk.
-        # This ensures that if launcher.sh itself was updated, the new version is used.
-        exec "$APP_DIR/launcher.sh"
+        log "UPDATE: Application signaled for an update. Pulling latest code from git..."
+        # Prevent git from hanging on authentication
+        GIT_TERMINAL_PROMPT=0 /usr/bin/git pull
+        GIT_PULL_STATUS=$?
+        log "INFO: Git pull finished with status $GIT_PULL_STATUS."
+
+        if [ "$GIT_PULL_STATUS" -eq 0 ]; then
+            log "UPDATE: Git pull successful. Restarting the launcher..."
+            # Use exec to replace the current process with the new version.
+            exec "$APP_DIR/launcher.sh"
+        else
+            log "ERROR: Git pull failed with status $GIT_PULL_STATUS. Will not restart. Exiting."
+            break
+        fi
     else
         # Any other exit code means a crash or a clean shutdown
-        echo "INFO: Application exited with status $STATUS. Shutting down launcher."
+        log "INFO: Application exited with status $STATUS. Shutting down launcher."
         break
     fi
 done
+
+log "================================================="
+log "INFO: Launcher script finished."
+log "================================================="
