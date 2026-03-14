@@ -68,7 +68,6 @@ def index():
 @auth.login_required
 def trigger_update():
     logging.warning('Received update request. Exiting with update code...')
-    logging.shutdown()
     os._exit(EXIT_CODE_FOR_UPDATE)
 
 
