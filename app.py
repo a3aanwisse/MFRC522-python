@@ -45,6 +45,9 @@ log.setLevel(logging.ERROR)
 
 EXIT_CODE_FOR_UPDATE = 10
 
+# Global event for graceful shutdown
+shutdown_event = threading.Event()
+
 
 @auth.verify_password
 def verify_password(username, password):
@@ -67,8 +70,10 @@ def index():
 @app.route('/update', methods=['POST'])
 @auth.login_required
 def trigger_update():
-    logging.warning('Received update request. Exiting with update code...')
-    os._exit(EXIT_CODE_FOR_UPDATE)
+    logging.warning('Received update request. Initiating graceful shutdown for update...')
+    controller.stop_listening() # Signal controller to stop its loops
+    shutdown_event.set() # Signal main thread to exit
+    return jsonify({'message': 'Update initiated, application is shutting down.'}), 202 # Return immediately
 
 
 @app.route('/config/reload', methods=['POST'])
@@ -213,38 +218,48 @@ def test_notification():
 
 if __name__ == '__main__':
     try:
-        # Pass the loaded config object to the controller
         controller.setup(config)
 
+        flask_thread = None
         if not IS_DEVELOPMENT:
             logging.info('Starting production server with Waitress...')
             from waitress import serve
-            
-            # Run waitress in a separate thread so we can also run the NFC listener
-            server_thread = threading.Thread(
+            flask_thread = threading.Thread(
                 target=lambda: serve(app, host='0.0.0.0', port=5000, threads=32)
             )
-            server_thread.daemon = True
-            server_thread.start()
-
-            logging.info('Starting NFC listener on the Raspberry Pi.')
-            logging.info('To install production dependencies, run: pip install -r requirements.txt')
         else:
             logging.info('Running in development mode with Flask dev server.')
-            logging.info('To install development dependencies, run: pip install -r requirements-dev.txt')
-            
-            app_thread = threading.Thread(
-                target=lambda: app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False))
-            app_thread.daemon = True
-            app_thread.start()
+            flask_thread = threading.Thread(
+                target=lambda: app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
+            )
+        
+        flask_thread.daemon = True # Allow main program to exit even if this thread is still running
+        flask_thread.start()
 
-            app_thread.join()
+        logging.info('Starting NFC listener in a separate thread.')
+        nfc_listener_thread = threading.Thread(target=controller.start_listening)
+        nfc_listener_thread.daemon = True
+        nfc_listener_thread.start()
 
-        controller.start_listening()
+        # Main thread waits for a shutdown signal
+        logging.info('Application running. Waiting for shutdown signal...')
+        shutdown_event.wait() # This will block until shutdown_event.set() is called
+
+        logging.info('Shutdown signal received. Performing graceful shutdown...')
+        # Ensure controller threads are stopped (redundant if trigger_update called it, but safe)
+        controller.stop_listening()
+
+        # Wait for NFC listener thread to finish (optional, but good for clean exit)
+        # nfc_listener_thread.join(timeout=5) # Give it some time to finish
+
+        logging.info(f'Exiting application with status {EXIT_CODE_FOR_UPDATE}.')
+        sys.exit(EXIT_CODE_FOR_UPDATE)
 
     except KeyboardInterrupt:
-        logging.info('Program terminated manually!')
-        sys.exit(0)
+        logging.info('Program terminated manually (KeyboardInterrupt)!')
+        controller.stop_listening()
+        sys.exit(0) # Normal exit for manual termination
     except Exception as e:
         logging.error(f'An unexpected error occurred: {e}', exc_info=True)
-        sys.exit(1)
+        controller.stop_listening()
+        sys.exit(1) # Error exit

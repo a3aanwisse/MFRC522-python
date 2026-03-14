@@ -19,7 +19,7 @@ from requests.auth import HTTPDigestAuth
 from gpiozero import Button, OutputDevice
 from mfrc522 import SimpleMFRC522
 
-VERSION = "1.8.1"
+VERSION = "1.8.2"
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
 RELAY_PIN = 17
@@ -372,7 +372,7 @@ def listen_for_ntfy_commands():
     # Listen on a separate topic to keep the main topic clean
     control_topic = f"{NTFY_TOPIC}_control"
     logging.info(f"Starting remote command listener on topic: {control_topic}")
-    while True:
+    while continue_reading: # Added continue_reading check here as well
         try:
             # Listen to the stream for JSON data
             resp = requests.get(f'https://ntfy.sh/{control_topic}/json', stream=True, timeout=60)
@@ -466,3 +466,9 @@ def start_listening():
         except Exception as e:
             logging.error(f"Error reading NFC tag: {e}")
             time.sleep(1) # Prevent tight loop on error
+
+def stop_listening():
+    """Stops the NFC reader and other listening threads."""
+    global continue_reading
+    logging.info('Stopping NFC reader and other listening threads...')
+    continue_reading = False
