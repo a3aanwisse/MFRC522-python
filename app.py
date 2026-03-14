@@ -249,8 +249,8 @@ if __name__ == '__main__':
         # Ensure controller threads are stopped (redundant if trigger_update called it, but safe)
         controller.stop_listening()
 
-        # Wait for NFC listener thread to finish (optional, but good for clean exit)
-        # nfc_listener_thread.join(timeout=5) # Give it some time to finish
+        # Wait for NFC listener thread to finish to allow for clean GPIO cleanup
+        nfc_listener_thread.join(timeout=5)
 
         logging.info(f'Exiting application with status {EXIT_CODE_FOR_UPDATE}.')
         sys.exit(EXIT_CODE_FOR_UPDATE)
@@ -258,7 +258,7 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         logging.info('Program terminated manually (KeyboardInterrupt)!')
         controller.stop_listening()
-        sys.exit(0) # Normal exit for manual termination
+        sys.exit(0)
     except Exception as e:
         logging.error(f'An unexpected error occurred: {e}', exc_info=True)
         controller.stop_listening()

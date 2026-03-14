@@ -8,10 +8,11 @@
 # Stop the script if an error occurs
 set -e
 
-# Function to log messages to syslog
+# Function to log messages to syslog with timestamp
 log() {
-    echo "$1"
-    logger -t dooropener-launcher "$1"
+    local timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+    echo "${timestamp} - $1"
+    logger -t dooropener-launcher "${timestamp} - $1"
 }
 
 log "================================================="
