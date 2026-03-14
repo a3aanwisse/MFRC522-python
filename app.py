@@ -225,7 +225,7 @@ if __name__ == '__main__':
             logging.info('Starting production server with Waitress...')
             from waitress import serve
             flask_thread = threading.Thread(
-                target=lambda: serve(app, host='0.0.0.0', port=5000, threads=32)
+                target=lambda: serve(app, host='0.0.0.0', port=5000, threads=6)
             )
         else:
             logging.info('Running in development mode with Flask dev server.')
