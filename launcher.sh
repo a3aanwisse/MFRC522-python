@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # launcher.sh
 
 # Stop het script als er een fout optreedt
@@ -28,7 +28,7 @@ if [ ! -d "$VENV_DIR" ]; then
 fi
 
 # Activeer de virtuele omgeving
-. "$VENV_DIR/bin/activate"
+source "$VENV_DIR/bin/activate"
 
 # Controleer of het requirements bestand is veranderd sinds de laatste installatie
 if [ ! -f "$INSTALLED_REQ_FILE" ] || ! cmp -s "$REQ_FILE" "$INSTALLED_REQ_FILE"; then

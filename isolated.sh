@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Stop het script als er een fout optreedt
 set -e
@@ -21,7 +21,7 @@ fi
 
 # Activeer de virtuele omgeving en installeer de dependencies
 echo "Dependencies worden geïnstalleerd..."
-. $VENV_DIR/bin/activate
+source $VENV_DIR/bin/activate
 pip install -r isolated_requirements.txt
 
 # Voer het testscript uit
