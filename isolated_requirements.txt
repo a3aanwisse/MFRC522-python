@@ -5,3 +5,4 @@ gpiozero
 flask
 flask_httpauth
 werkzeug
+importlib-metadata
