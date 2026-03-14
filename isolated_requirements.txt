@@ -1,7 +1,0 @@
-mfrc522
-RPi.GPIO
-spidev
-gpiozero==1.5.1
-flask
-flask_httpauth
-werkzeug
