@@ -10,7 +10,7 @@ set -e
 
 APP_DIR=/home/pi/MFRC522-python
 HOME_DIR=/home/pi/dooropener
-REQ_FILE="${CHECKOUT_DIR}/requirements.txt"
+REQ_FILE="${HOME_DIR}/requirements.txt"
 INSTALLED_REQ_FILE="${VENV_DIR}/.installed_requirements"
 
 # This script acts as a watchdog for the main Python application.
@@ -50,6 +50,7 @@ if [ ! -d "$VENV_DIR" ]; then
 fi
 
 # Activeer de virtuele omgeving
+log "Activeer de virtuele omgeving in '$VENV_DIR'..."
 source "$VENV_DIR/bin/activate"
 
 # Controleer of het requirements bestand is veranderd sinds de laatste installatie
