@@ -1,6 +1,7 @@
 mfrc522
 RPi.GPIO
 spidev
+gpiozero
 flask
 flask_httpauth
 werkzeug
