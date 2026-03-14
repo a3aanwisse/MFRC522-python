@@ -197,7 +197,8 @@ def test():
 @app.route('/relay/toggle', methods=['PUT'])
 @auth.login_required
 def toggle_relay():
-    controller.toggle_relay()
+    user = auth.username() # Get the currently logged-in user
+    controller.toggle_relay(user=user) # Pass the user to the controller
     return 'ok', 204
 
 

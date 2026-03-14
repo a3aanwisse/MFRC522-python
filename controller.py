@@ -19,7 +19,7 @@ from requests.auth import HTTPDigestAuth
 from gpiozero import Button, OutputDevice
 from mfrc522 import MFRC522
 
-VERSION = "1.10.1" # Patch version incremented for starting NFC reader by default
+VERSION = "1.10.2" # Patch version incremented for logging user on manual relay toggle
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
 RELAY_PIN = 17
@@ -173,6 +173,10 @@ def log_stat_event(action, user=None):
             data['total_opens'] = data.get('total_opens', 0) + 1
         elif action == 'LONG_OPEN_WARNING':
             data['long_open_events'] = data.get('long_open_events', 0) + 1
+        elif action == 'TOGGLE_RELAY': # Log manual toggle events
+            # For manual toggles, we don't increment total_opens here,
+            # as the reed switch will trigger the 'OPEN' event.
+            pass
             
         # Add to history (keep last 100 events)
         data.setdefault('history', []).insert(0, event)
@@ -217,21 +221,24 @@ def broadcast_hardware_update():
             hardware_listeners.remove(d)
 
 
-def _perform_toggle_relay():
-    logging.info('Toggling relay')
+def _perform_toggle_relay(user=None):
+    logging.info(f'Toggling relay by user: {user if user else "NFC Card"}')
     if relay:
         relay.toggle()
         time.sleep(.5)
         relay.toggle()
         time.sleep(1.5)
         broadcast_hardware_update() # Notify UI that toggle is done
+        # Log the manual toggle event here
+        if user:
+            log_stat_event('TOGGLE_RELAY', user=user)
     else:
         logging.error("Relay not initialized")
 
-def toggle_relay():
+def toggle_relay(user=None):
     # Run the actual relay toggle in a separate thread so we don't block the caller
     # (especially important for the web server to avoid queue depth issues)
-    threading.Thread(target=_perform_toggle_relay, daemon=True).start()
+    threading.Thread(target=_perform_toggle_relay, args=(user,), daemon=True).start()
 
 
 def setup_reed_contacts():
