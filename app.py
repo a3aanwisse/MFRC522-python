@@ -64,14 +64,16 @@ def inject_version():
 @app.route('/')
 @auth.login_required
 def index():
-    return render_template('index.html', username=auth.username(), ntfy_topic=controller.NTFY_TOPIC)
+    nfc_status = controller.get_nfc_status()
+    return render_template('index.html', username=auth.username(), ntfy_topic=controller.NTFY_TOPIC, nfc_status=nfc_status)
 
 
 @app.route('/update', methods=['POST'])
 @auth.login_required
 def trigger_update():
     logging.warning('Received update request. Initiating graceful shutdown for update...')
-    controller.stop_listening() # Signal controller to stop its loops
+    controller.stop_nfc_reader() # Stop NFC reader gracefully
+    controller.stop_listening() # Signal controller to stop other loops (like ntfy listener)
     shutdown_event.set() # Signal main thread to exit
     return jsonify({'message': 'Update initiated, application is shutting down.'}), 202 # Return immediately
 
@@ -218,6 +220,29 @@ def test_notification():
     threading.Thread(target=controller.send_ntfy_notification, args=(True,)).start()
     return 'ok', 204
 
+@app.route('/nfc/status', methods=['GET'])
+@auth.login_required
+def nfc_status():
+    return jsonify({'nfc_active': controller.get_nfc_status()})
+
+@app.route('/nfc/start', methods=['POST'])
+@auth.login_required
+def nfc_start():
+    if controller.start_nfc_reader():
+        flash('NFC-lezer succesvol gestart.', 'success')
+    else:
+        flash('NFC-lezer is al actief of kon niet starten.', 'warning')
+    return redirect(url_for('index'))
+
+@app.route('/nfc/stop', methods=['POST'])
+@auth.login_required
+def nfc_stop():
+    if controller.stop_nfc_reader():
+        flash('NFC-lezer succesvol gestopt.', 'success')
+    else:
+        flash('NFC-lezer is niet actief of kon niet stoppen.', 'warning')
+    return redirect(url_for('index'))
+
 
 if __name__ == '__main__':
     try:
@@ -239,10 +264,8 @@ if __name__ == '__main__':
         flask_thread.daemon = True # Allow main program to exit even if this thread is still running
         flask_thread.start()
 
-        logging.info('Starting NFC listener in a separate thread.')
-        nfc_listener_thread = threading.Thread(target=controller.start_listening)
-        nfc_listener_thread.daemon = True
-        nfc_listener_thread.start()
+        # NFC listener is no longer started automatically here.
+        # It will be controlled via the web interface.
 
         # Main thread waits for a shutdown signal
         logging.info('Application running. Waiting for shutdown signal...')
@@ -250,19 +273,22 @@ if __name__ == '__main__':
 
         logging.info('Shutdown signal received. Performing graceful shutdown...')
         # Ensure controller threads are stopped (redundant if trigger_update called it, but safe)
-        controller.stop_listening()
+        controller.stop_nfc_reader() # Ensure NFC reader is stopped
+        controller.stop_listening() # Stop other listeners (like ntfy)
 
-        # Wait for NFC listener thread to finish to allow for clean GPIO cleanup
-        nfc_listener_thread.join(timeout=5)
+        # No need to join nfc_listener_thread here as it's managed by start/stop_nfc_reader
+        # nfc_listener_thread.join(timeout=5)
 
         logging.info(f'Exiting application with status {EXIT_CODE_FOR_UPDATE}.')
         sys.exit(EXIT_CODE_FOR_UPDATE)
 
     except KeyboardInterrupt:
         logging.info('Program terminated manually (KeyboardInterrupt)!')
+        controller.stop_nfc_reader()
         controller.stop_listening()
         sys.exit(0)
     except Exception as e:
         logging.error(f'An unexpected error occurred: {e}', exc_info=True)
+        controller.stop_nfc_reader()
         controller.stop_listening()
         sys.exit(1) # Error exit

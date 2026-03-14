@@ -19,7 +19,7 @@ from requests.auth import HTTPDigestAuth
 from gpiozero import Button, OutputDevice
 from mfrc522 import MFRC522
 
-VERSION = "1.9.4" # Patch version incremented for CPU usage fix
+VERSION = "1.10.0" # Minor version incremented for adding NFC reader control
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
 RELAY_PIN = 17
@@ -35,7 +35,11 @@ CAMERA_URL = None
 CAMERA_USER = None
 CAMERA_PASS = None
 
-continue_reading = True
+# Global control for NFC reader thread
+continue_reading = False # Initially set to False, reader starts on demand
+nfc_reader_thread = None
+nfc_reader_active = False # Tracks if the NFC reader thread is currently running
+
 allowed_cards = {} # Now stores {"CARD_ID": "Gebruikersnaam"}
 last_used_card_user = None  # Stores the username of the last card used
 active_close_token = None # Stores the unique token for the current open session
@@ -458,9 +462,10 @@ def remove_hardware_listener(q):
     if q in hardware_listeners:
         hardware_listeners.remove(q)
 
-def start_listening():
-    global last_used_card_user
-    logging.info('Starting NFC reader...')
+def _nfc_listening_loop():
+    """The main loop for the NFC reader, run in a separate thread."""
+    global last_used_card_user, continue_reading, nfc_reader_active
+    logging.info('Starting NFC reader loop...')
 
     # Check if door is already open upon startup (e.g. after a reboot/update)
     if reed_open_door and reed_open_door.is_pressed:
@@ -472,6 +477,7 @@ def start_listening():
     
     reader = MFRC522()
     logging.info('Started NFC reader. Waiting for cards...')
+    nfc_reader_active = True
     while continue_reading:
         try:
             # Scan for cards
@@ -498,16 +504,47 @@ def start_listening():
                     time.sleep(1) # Keep this delay after a successful read
             else:
                 # If no card is found, introduce a small delay to reduce CPU usage
-                time.sleep(0.1) # Small delay to prevent busy-waiting
+                time.sleep(0.5) # Small delay to prevent busy-waiting
 
         except Exception as e:
             # This can happen if the reader is interrupted by a shutdown signal
-            if continue_reading:
+            if continue_reading: # Only log if we intended to continue reading
                 logging.error(f"Error reading NFC tag: {e}")
                 time.sleep(1) # Prevent tight loop on error
+    
+    logging.info('NFC reader loop stopped.')
+    nfc_reader_active = False
 
-def stop_listening():
-    """Stops the NFC reader and other listening threads."""
-    global continue_reading
-    logging.info('Stopping NFC reader and other listening threads...')
+
+def start_nfc_reader():
+    """Starts the NFC reader in a separate thread."""
+    global nfc_reader_thread, continue_reading, nfc_reader_active
+    if nfc_reader_thread and nfc_reader_thread.is_alive():
+        logging.warning("NFC reader is already running.")
+        return False
+    
+    logging.info('Starting NFC reader thread...')
+    continue_reading = True
+    nfc_reader_thread = threading.Thread(target=_nfc_listening_loop, daemon=True)
+    nfc_reader_thread.start()
+    return True
+
+def stop_nfc_reader():
+    """Stops the NFC reader thread."""
+    global continue_reading, nfc_reader_thread, nfc_reader_active
+    if not nfc_reader_thread or not nfc_reader_thread.is_alive():
+        logging.warning("NFC reader is not running.")
+        return False
+    
+    logging.info('Stopping NFC reader thread...')
     continue_reading = False
+    nfc_reader_thread.join(timeout=2) # Give the thread a chance to finish
+    if nfc_reader_thread.is_alive():
+        logging.warning("NFC reader thread did not terminate gracefully.")
+    nfc_reader_active = False
+    return True
+
+def get_nfc_status():
+    """Returns the current status of the NFC reader (True if running, False otherwise)."""
+    global nfc_reader_active
+    return nfc_reader_active

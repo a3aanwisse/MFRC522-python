@@ -140,6 +140,21 @@
                 </div>
             </div>
 
+            <!-- NFC Reader Control -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card menu-card text-center p-4">
+                    <div class="card-body">
+                        <div class="card-icon">📡</div>
+                        <h4 class="card-title">NFC Lezer</h4>
+                        <p class="card-text text-muted">Status: <span id="nfcStatusText" class="fw-bold">Laden...</span></p>
+                        <div class="d-grid gap-2 mt-3">
+                            <button id="startNfcBtn" class="btn btn-success" onclick="toggleNfcReader(true)">Start Lezer</button>
+                            <button id="stopNfcBtn" class="btn btn-danger" onclick="toggleNfcReader(false)">Stop Lezer</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Config Reload -->
             <div class="col-md-6 col-lg-3">
                 <form action="/config/reload" method="post" onsubmit="return confirm('Configuratie herladen?');" style="height: 100%;">
@@ -171,6 +186,81 @@
     </div>
 
     <script>
+        // Initial NFC status from Flask
+        let nfcIsActive = {{ 'true' if nfc_status else 'false' }};
+
+        function updateNfcReaderUI() {
+            const statusText = document.getElementById('nfcStatusText');
+            const startBtn = document.getElementById('startNfcBtn');
+            const stopBtn = document.getElementById('stopNfcBtn');
+
+            if (nfcIsActive) {
+                statusText.textContent = 'Actief';
+                statusText.classList.remove('text-danger');
+                statusText.classList.add('text-success');
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+            } else {
+                statusText.textContent = 'Inactief';
+                statusText.classList.remove('text-success');
+                statusText.classList.add('text-danger');
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            }
+        }
+
+        async function toggleNfcReader(start) {
+            const endpoint = start ? '/nfc/start' : '/nfc/stop';
+            const confirmMsg = start ? 'Weet je zeker dat je de NFC-lezer wilt starten?' : 'Weet je zeker dat je de NFC-lezer wilt stoppen?';
+
+            if (!confirm(confirmMsg)) return;
+
+            try {
+                const response = await fetch(endpoint, { method: 'POST' });
+                if (response.ok) {
+                    // Update status immediately for better UX, then fetch actual status
+                    nfcIsActive = start;
+                    updateNfcReaderUI();
+                    // Optionally, fetch status from server to be absolutely sure
+                    // fetchNfcStatus();
+                    location.reload(); // Reload to show flash messages
+                } else {
+                    const errorData = await response.json();
+                    alert('Fout: ' + (errorData.message || 'Onbekende fout.'));
+                }
+            } catch (error) {
+                console.error('Fout bij het schakelen van NFC-lezer:', error);
+                alert('Er is een netwerkfout opgetreden of de server reageert niet.');
+            }
+        }
+
+        // Fetch NFC status on page load
+        async function fetchNfcStatus() {
+            try {
+                const response = await fetch('/nfc/status');
+                if (response.ok) {
+                    const data = await response.json();
+                    nfcIsActive = data.nfc_active;
+                    updateNfcReaderUI();
+                } else {
+                    console.error('Fout bij het ophalen van NFC-status:', response.statusText);
+                    document.getElementById('nfcStatusText').textContent = 'Fout';
+                    document.getElementById('nfcStatusText').classList.add('text-danger');
+                }
+            } catch (error) {
+                console.error('Netwerkfout bij het ophalen van NFC-status:', error);
+                document.getElementById('nfcStatusText').textContent = 'Offline';
+                document.getElementById('nfcStatusText').classList.add('text-danger');
+            }
+        }
+
+        // Call update UI on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateNfcReaderUI();
+            // fetchNfcStatus(); // Uncomment if you want to fetch status dynamically after initial load
+        });
+
+
         function startUpdate() {
             if (!confirm('Weet je zeker dat je wilt updaten/herstarten?')) return;
 
