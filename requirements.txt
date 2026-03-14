@@ -1,13 +1,7 @@
-mfrc522-python == 0.0.7
-# On PI:
-#RPi.GPIO == 0.7.1
-fake-rpigpio == 0.1.1
-fake-rpi == 0.7.1
-# -e git+https://github.com/lthiery/SPI-Py.git#egg=SPI-Py
-gpiozero == 2.0.1
+mfrc522~=0.0.7
+RPi.GPIO==0.7.0
+-e git+https://github.com/lthiery/SPI-Py.git#egg=SPI-Py
 
-#frontend
-flask == 3.1.2
+gpiozero~=1.5.1
+Flask~=1.1.2
 flask_httpauth
-markupsafe == 3.0.3
-werkzeug == 3.1.5
