@@ -1,0 +1,6 @@
+mfrc522
+RPi.GPIO
+spidev
+flask
+flask_httpauth
+werkzeug
