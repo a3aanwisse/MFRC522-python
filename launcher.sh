@@ -18,7 +18,7 @@ then
     exit 1
 fi
 
-REQ_FILE="isolated_requirements.txt"
+REQ_FILE="requirements.txt"
 INSTALLED_REQ_FILE="${VENV_DIR}/.installed_requirements"
 
 cd $CHECKOUT_DIR
