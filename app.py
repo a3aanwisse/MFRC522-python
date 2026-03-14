@@ -247,6 +247,7 @@ def nfc_stop():
 if __name__ == '__main__':
     try:
         controller.setup(config)
+        controller.start_nfc_reader() # Start NFC reader by default
 
         flask_thread = None
         if not IS_DEVELOPMENT:
@@ -264,9 +265,6 @@ if __name__ == '__main__':
         flask_thread.daemon = True # Allow main program to exit even if this thread is still running
         flask_thread.start()
 
-        # NFC listener is no longer started automatically here.
-        # It will be controlled via the web interface.
-
         # Main thread waits for a shutdown signal
         logging.info('Application running. Waiting for shutdown signal...')
         shutdown_event.wait() # This will block until shutdown_event.set() is called
@@ -275,9 +273,6 @@ if __name__ == '__main__':
         # Ensure controller threads are stopped (redundant if trigger_update called it, but safe)
         controller.stop_nfc_reader() # Ensure NFC reader is stopped
         controller.stop_listening() # Stop other listeners (like ntfy)
-
-        # No need to join nfc_listener_thread here as it's managed by start/stop_nfc_reader
-        # nfc_listener_thread.join(timeout=5)
 
         logging.info(f'Exiting application with status {EXIT_CODE_FOR_UPDATE}.')
         sys.exit(EXIT_CODE_FOR_UPDATE)
