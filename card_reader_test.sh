@@ -3,8 +3,10 @@
 # Stop het script als er een fout optreedt
 set -e
 
+HOME_DIR=/home/pi/dooropener
+
 # De naam voor de virtuele omgeving
-VENV_DIR="venv_card_reader_test"
+VENV_DIR="$HOME_DIR/venv_card_reader_test"
 
 # Controleer of python3 beschikbaar is
 if ! command -v python3 &> /dev/null

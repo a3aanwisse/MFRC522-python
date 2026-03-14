@@ -4,10 +4,12 @@
 # Stop het script als er een fout optreedt
 set -e
 
+HOME_DIR=/home/pi/dooropener
+CHECKOUT_DIR=/home/pi/MFRC522-python
 # Haal de huidige git branch op
 BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
 # De naam voor de virtuele omgeving
-VENV_DIR="venv_${BRANCH_NAME}"
+VENV_DIR="$HOME_DIR/venv_${BRANCH_NAME}"
 
 # Controleer of python3 beschikbaar is
 if ! command -v python3 &> /dev/null
@@ -19,7 +21,7 @@ fi
 REQ_FILE="isolated_requirements.txt"
 INSTALLED_REQ_FILE="${VENV_DIR}/.installed_requirements"
 
-cd /home/pi/MFRC522-python
+cd $CHECKOUT_DIR
 
 # Creëer de virtuele omgeving als deze nog niet bestaat
 if [ ! -d "$VENV_DIR" ]; then
