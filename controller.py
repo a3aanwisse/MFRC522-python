@@ -19,7 +19,7 @@ from requests.auth import HTTPDigestAuth
 from gpiozero import Button, OutputDevice
 from mfrc522 import MFRC522
 
-VERSION = "1.9.1"
+VERSION = "1.9.2" # Patch version incremented for this change
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
 RELAY_PIN = 17
@@ -36,8 +36,8 @@ CAMERA_USER = None
 CAMERA_PASS = None
 
 continue_reading = True
-allowed_cards = {}
-last_used_card_id = None  # We only need to know if a card was used, not the phone number
+allowed_cards = {} # Now stores {"CARD_ID": "Gebruikersnaam"}
+last_used_card_user = None  # Stores the username of the last card used
 active_close_token = None # Stores the unique token for the current open session
 
 relay: OutputDevice = None
@@ -104,31 +104,44 @@ def read_allowed_cards():
                 line = line.strip()
                 if not line or line.startswith('#'):
                     continue
-                # The file now only contains card IDs, one per line
-                new_allowed_cards[line] = True
+                
+                parts = line.split(',', 1) # Split only on the first comma
+                if len(parts) == 2:
+                    card_id, user_name = parts[0].strip(), parts[1].strip()
+                    new_allowed_cards[card_id] = user_name
+                else:
+                    logging.warning(f"Invalid line format in {VALID_CARDS_FILE} at line {i}: '{line}'. Expected 'card_id,user_name'.")
+                    # For backward compatibility, if only card ID is present, use it with a generic name
+                    new_allowed_cards[line] = "Onbekend"
+
         allowed_cards = new_allowed_cards
-        logging.info('Allowed cards loaded: %s', list(allowed_cards.keys()))
+        logging.info('Allowed cards loaded: %s', allowed_cards)
     except FileNotFoundError:
         logging.error(f'Could not find {VALID_CARDS_FILE}. No cards will be loaded.')
         allowed_cards = {}
 
 
 def get_allowed_cards():
-    # Return a list of keys for display purposes
+    # Return a list of card IDs for display purposes
     return list(allowed_cards.keys())
 
 
-def add_allowed_card(card_id):
-    """Adds a new card ID to the file."""
+def add_allowed_card(card_id, user_name="Onbekend"):
+    """Adds a new card ID and user name to the file."""
     card_id_str = str(card_id)
     try:
+        # Check if the card_id already exists to avoid duplicates
+        if card_id_str in allowed_cards:
+            logging.warning(f"Card ID {card_id_str} already exists. Not adding.")
+            return False
+
         with open(VALID_CARDS_FILE, 'a') as file:
-            file.write(f'\n{card_id_str}')
-        logging.info(f'Writing card id {card_id_str} to file.')
-        read_allowed_cards()
+            file.write(f'\n{card_id_str},{user_name}')
+        logging.info(f'Writing card id {card_id_str} with user {user_name} to file.')
+        read_allowed_cards() # Reload all cards to update in-memory dictionary
         return True
     except Exception as e:
-        logging.error(f"Failed to write card ID to file: {e}")
+        logging.error(f"Failed to write card ID and user name to file: {e}")
         return False
 
 
@@ -243,15 +256,15 @@ def read_reed_open_door():
 
 
 def reed_closed_door_open():
-    global last_used_card_id
+    global last_used_card_user
     logging.info('Closed door reed contact is open - garage door is opening/open.')
     
     # Log the event BEFORE resetting the card ID
-    log_stat_event('OPEN', last_used_card_id)
+    log_stat_event('OPEN', last_used_card_user)
     
     # Reset last used card on any new door opening event to detect manual opens
-    last_used_card_id = None
-    logging.info('Reset last used card ID due to new door opening event.')
+    last_used_card_user = None
+    logging.info('Reset last used card user due to new door opening event.')
     broadcast_hardware_update()
 
 
@@ -307,8 +320,8 @@ def send_ntfy_notification(is_test=False):
         else:
             log_stat_event('LONG_OPEN_WARNING')
 
-        if last_used_card_id:
-            message += f' Laatst opengemaakt met kaart: {last_used_card_id}.'
+        if last_used_card_user:
+            message += f' Laatst opengemaakt door: {last_used_card_user}.'
         elif not is_test:
             message += ' Laatst handmatig geopend (gebruiker onbekend).'
 
@@ -440,7 +453,7 @@ def remove_hardware_listener(q):
         hardware_listeners.remove(q)
 
 def start_listening():
-    global last_used_card_id
+    global last_used_card_user
     logging.info('Starting NFC reader...')
 
     # Check if door is already open upon startup (e.g. after a reboot/update)
@@ -468,11 +481,12 @@ def start_listening():
                     card_id_str = "".join([f"{i:02X}" for i in uid])
                     
                     if card_id_str in allowed_cards:
-                        last_used_card_id = card_id_str
-                        logging.info(f'ACCESS FOR CARD {card_id_str}')
+                        user_name = allowed_cards[card_id_str]
+                        last_used_card_user = user_name
+                        logging.info(f'ACCESS GRANTED for card {card_id_str} (User: {user_name})')
                         toggle_relay()
                     else:
-                        logging.info(f'ACCESS BLOCKED FOR CARD {card_id_str}')
+                        logging.info(f'ACCESS BLOCKED for card {card_id_str}')
                     
                     # A small delay to prevent multiple reads of the same card
                     time.sleep(1)

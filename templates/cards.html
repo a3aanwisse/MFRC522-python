@@ -41,6 +41,10 @@
                                 <label for="card_id" class="form-label">Kaart ID (NFC Tag):</label>
                                 <input type="text" class="form-control" id="card_id" name="card_id" placeholder="Bijv. 123456789" required>
                             </div>
+                            <div class="mb-3">
+                                <label for="user_name" class="form-label">Gebruikersnaam:</label>
+                                <input type="text" class="form-control" id="user_name" name="user_name" placeholder="Bijv. Jan Jansen">
+                            </div>
                             <button type="submit" class="btn btn-success w-100">Toevoegen</button>
                         </form>
                     </div>
@@ -60,12 +64,14 @@
                                     <thead>
                                         <tr>
                                             <th>Kaart ID</th>
+                                            <th>Gebruikersnaam</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for card_id in cards %}
+                                        {% for card_id, user_name in cards.items() %}
                                             <tr>
                                                 <td><code>{{ card_id }}</code></td>
+                                                <td>{{ user_name }}</td>
                                             </tr>
                                         {% endfor %}
                                     </tbody>

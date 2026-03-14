@@ -3,6 +3,8 @@
 Als iets niet duidelijk is of als er meerdere oplossingsrichtingen zijn, 
 stel dan een vraag in plaats van zelf gelijk een keuze te maken!
 
+Als je backend code aanpast, vergeet de bijbehorende frontend code niet!
+
 ## Platform
 Hou er rekening mee dat voorgestelde oplossing MOET werken op een Raspberry Pi 1 Model B+!!
 

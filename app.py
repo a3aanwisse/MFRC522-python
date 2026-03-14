@@ -109,21 +109,24 @@ def reload_config():
 def manage_cards():
     if request.method == 'POST':
         card_id = request.form.get('card_id')
+        user_name = request.form.get('user_name', 'Onbekend') # Get user_name, default to 'Onbekend'
 
         if not card_id:
             flash('Card ID is required.', 'error')
         else:
-            # The controller now handles adding the card ID to the list
-            if controller.add_allowed_card(card_id):
-                flash(f'Successfully added card {card_id}.', 'success')
+            # The controller now handles adding the card ID and user name
+            if controller.add_allowed_card(card_id, user_name):
+                flash(f'Successfully added card {card_id} for user {user_name}.', 'success')
             else:
-                flash(f'Failed to add card {card_id}. Check logs.', 'error')
+                flash(f'Failed to add card {card_id}. It might already exist or an error occurred.', 'error')
         
         return redirect(url_for('manage_cards'))
 
     # On GET request, display the cards
-    cards = controller.get_allowed_cards()
-    return render_template('cards.html', cards=cards)
+    # controller.get_allowed_cards() now returns a list of card IDs, not a dictionary
+    # We need to pass the full allowed_cards dictionary to the template
+    cards_with_users = controller.allowed_cards # Access the global dictionary directly
+    return render_template('cards.html', cards=cards_with_users)
 
 
 @app.route('/stats')
