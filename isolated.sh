@@ -26,7 +26,7 @@ pip install -r isolated_requirements.txt
 
 # Voer het testscript uit
 echo "Het testscript wordt gestart. Druk op Ctrl+C om te stoppen."
-python simple_test.py
+python3 app.py
 
 # Deactiveer de virtuele omgeving na afloop
 deactivate
