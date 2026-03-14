@@ -4,7 +4,7 @@
 set -e
 
 # De naam voor de virtuele omgeving
-VENV_DIR="simple_test_venv"
+VENV_DIR="venv_card_reader_test"
 
 # Controleer of python3 beschikbaar is
 if ! command -v python3 &> /dev/null
@@ -22,11 +22,11 @@ fi
 # Activeer de virtuele omgeving en installeer de dependencies
 echo "Dependencies worden geïnstalleerd..."
 source $VENV_DIR/bin/activate
-pip install -r simple_test_requirements.txt
+pip install -r card_reader_test_requirements.txt
 
 # Voer het testscript uit
-echo "Het testscript wordt gestart. Druk op Ctrl+C om te stoppen."
-python simple_test.py
+echo "Het card reader testscript wordt gestart. Druk op Ctrl+C om te stoppen."
+python card_reader_test.py
 
 # Deactiveer de virtuele omgeving na afloop
 deactivate
