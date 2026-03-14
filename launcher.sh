@@ -54,10 +54,12 @@ cd $CHECKOUT_DIR || exit 1
 while true; do
     # Launch the Python application.
     # The config file is specified here for production deployment.
+    set +e
     python3 app.py --config $HOME_DIR/config.ini
 
     # Capture the exit status of the Python script
     STATUS=$?
+    set -e
 
     # Check the exit status to decide what to do next
     if [ $STATUS -eq 10 ]; then
