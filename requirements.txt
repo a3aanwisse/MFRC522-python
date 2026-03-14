@@ -1,8 +1,10 @@
 # This file contains the production dependencies for the Raspberry Pi.
 # To install, run: pip install -r requirements.txt
 
-mfrc522-python == 0.0.7
-gpiozero == 2.0
+mfrc522
+#mfrc522-python == 0.0.7
+gpiozero == 1.5.1
+#gpiozero = 2.0
 requests
 
 # RPi.GPIO is usually pre-installed or installed as a dependency of gpiozero on Pi.
@@ -10,8 +12,10 @@ requests
 # RPi.GPIO == 0.7.1
 
 # --- Frontend ---
-flask == 2.2.5
+flask
+##flask == 2.2.5
 flask_httpauth
-markupsafe == 2.1.5
-werkzeug == 2.2.3
+#markupsafe == 2.1.5
+werkzeug
+#werkzeug == 2.2.3
 waitress == 2.1.2
