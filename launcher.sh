@@ -8,11 +8,6 @@
 # Stop the script if an error occurs
 set -e
 
-app_dir=/home/pi/MFRC522-python
-home_dir=/home/pi/dooropener
-req_file="${app_dir}/requirements.txt"
-installed_req_file="${venv_dir}/.installed_requirements"
-
 # Function to log messages to syslog
 log() {
     echo "$1"
@@ -26,10 +21,16 @@ log "================================================="
 # Navigate to the script's directory to ensure correct relative paths
 cd "$(dirname "$0")" || exit 1
 
+
+app_dir=/home/pi/MFRC522-python
+home_dir=/home/pi/dooropener
 # Get the current git branch
 branch_name=$(git rev-parse --abbrev-ref HEAD)
 # The name for the virtual environment
 venv_dir="${home_dir}/venv_${branch_name}"
+req_file="${app_dir}/requirements.txt"
+installed_req_file="${venv_dir}/.installed_requirements"
+
 
 # Check if python3 is available
 if ! command -v /usr/bin/python3 &> /dev/null
@@ -52,8 +53,8 @@ source "${venv_dir}/bin/activate"
 if [ ! -f "${installed_req_file}" ] || ! cmp -s "${req_file}" "${installed_req_file}"; then
     log "Dependencies have changed or are missing, installing..."
     pip install -r "${req_file}"
-    # Copy the installed requirements file to track future changes
-    cp "${req_file}" "$installed_req_file"
+    log "Copying the installed requirements file '${req_file}' to '${installed_req_file}' to track future changes"
+    cp "${req_file}" "${installed_req_file}"
 else
     log "Dependencies are up-to-date."
 fi
