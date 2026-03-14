@@ -19,7 +19,7 @@ from requests.auth import HTTPDigestAuth
 from gpiozero import Button, OutputDevice
 from mfrc522 import MFRC522
 
-VERSION = "1.9.3" # Patch version incremented for this change
+VERSION = "1.9.4" # Patch version incremented for CPU usage fix
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
 RELAY_PIN = 17
@@ -495,7 +495,10 @@ def start_listening():
                         logging.info(f'ACCESS BLOCKED for card {card_id_str}')
                     
                     # A small delay to prevent multiple reads of the same card
-                    time.sleep(1)
+                    time.sleep(1) # Keep this delay after a successful read
+            else:
+                # If no card is found, introduce a small delay to reduce CPU usage
+                time.sleep(0.1) # Small delay to prevent busy-waiting
 
         except Exception as e:
             # This can happen if the reader is interrupted by a shutdown signal
