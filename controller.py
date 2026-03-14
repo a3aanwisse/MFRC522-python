@@ -17,9 +17,9 @@ from threading import Timer
 import requests
 from requests.auth import HTTPDigestAuth
 from gpiozero import Button, OutputDevice
-from mfrc522 import SimpleMFRC522
+from mfrc522 import MFRC522
 
-VERSION = "1.8.3"
+VERSION = "1.9.0"
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
 RELAY_PIN = 17
@@ -451,21 +451,36 @@ def start_listening():
     # Start the remote listener in a background thread
     threading.Thread(target=listen_for_ntfy_commands, daemon=True).start()
     
-    reader = SimpleMFRC522()
-    logging.info('Started NFC reader')
+    reader = MFRC522()
+    logging.info('Started NFC reader. Waiting for cards...')
     while continue_reading:
         try:
-            (tag_id, tag_text) = reader.read()
-            tag_id_str = str(tag_id)
-            if tag_id_str in allowed_cards:
-                last_used_card_id = tag_id_str
-                logging.info(f'ACCESS FOR CARD {tag_id_str}')
-                toggle_relay()
-            else:
-                logging.info(f'ACCESS BLOCKED FOR CARD {tag_id_str}')
+            # Scan for cards
+            (status, TagType) = reader.MFRC522_Request(reader.PICC_REQIDL)
+
+            # If a card is found
+            if status == reader.MI_OK:
+                # Get the UID of the card
+                (status, uid) = reader.MFRC522_Anticoll()
+
+                if status == reader.MI_OK:
+                    card_id_str = "".join(str(i) for i in uid)
+                    
+                    if card_id_str in allowed_cards:
+                        last_used_card_id = card_id_str
+                        logging.info(f'ACCESS FOR CARD {card_id_str}')
+                        toggle_relay()
+                    else:
+                        logging.info(f'ACCESS BLOCKED FOR CARD {card_id_str}')
+                    
+                    # A small delay to prevent multiple reads of the same card
+                    time.sleep(1)
+
         except Exception as e:
-            logging.error(f"Error reading NFC tag: {e}")
-            time.sleep(1) # Prevent tight loop on error
+            # This can happen if the reader is interrupted by a shutdown signal
+            if continue_reading:
+                logging.error(f"Error reading NFC tag: {e}")
+                time.sleep(1) # Prevent tight loop on error
 
 def stop_listening():
     """Stops the NFC reader and other listening threads."""
