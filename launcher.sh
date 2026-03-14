@@ -74,8 +74,3 @@ while true; do
         break
     fi
 done
-
-# Deactiveer de virtuele omgeving na afloop
-deactivate
-
-echo "Script is voltooid."
