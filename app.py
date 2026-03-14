@@ -222,7 +222,7 @@ if __name__ == '__main__':
             
             # Run waitress in a separate thread so we can also run the NFC listener
             server_thread = threading.Thread(
-                target=lambda: serve(app, host='0.0.0.0', port=5000, threads=4)
+                target=lambda: serve(app, host='0.0.0.0', port=5000, threads=32)
             )
             server_thread.daemon = True
             server_thread.start()

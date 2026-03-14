@@ -19,7 +19,7 @@ from requests.auth import HTTPDigestAuth
 from gpiozero import Button, OutputDevice
 from mfrc522 import SimpleMFRC522
 
-VERSION = "1.8.0"
+VERSION = "1.8.1"
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
 RELAY_PIN = 17
@@ -200,7 +200,7 @@ def broadcast_hardware_update():
             hardware_listeners.remove(d)
 
 
-def toggle_relay():
+def _perform_toggle_relay():
     logging.info('Toggling relay')
     if relay:
         relay.toggle()
@@ -210,6 +210,11 @@ def toggle_relay():
         broadcast_hardware_update() # Notify UI that toggle is done
     else:
         logging.error("Relay not initialized")
+
+def toggle_relay():
+    # Run the actual relay toggle in a separate thread so we don't block the caller
+    # (especially important for the web server to avoid queue depth issues)
+    threading.Thread(target=_perform_toggle_relay, daemon=True).start()
 
 
 def setup_reed_contacts():
