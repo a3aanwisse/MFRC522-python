@@ -4,8 +4,6 @@
 # Stop het script als er een fout optreedt
 set -e
 
-cd /home/pi/MFRC522-python
-
 # Haal de huidige git branch op
 BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
 # De naam voor de virtuele omgeving
@@ -20,6 +18,8 @@ fi
 
 REQ_FILE="isolated_requirements.txt"
 INSTALLED_REQ_FILE="${VENV_DIR}/.installed_requirements"
+
+cd /home/pi/MFRC522-python
 
 # Creëer de virtuele omgeving als deze nog niet bestaat
 if [ ! -d "$VENV_DIR" ]; then
