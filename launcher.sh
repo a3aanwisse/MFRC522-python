@@ -11,6 +11,10 @@ set -e
 HOME_DIR=/home/pi/dooropener
 CHECKOUT_DIR=/home/pi/MFRC522-python
 # Haal de huidige git branch op
+
+# Navigate to the script's directory to ensure correct relative paths
+cd "$(dirname "$0")" || exit 1
+
 BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
 # De naam voor de virtuele omgeving
 VENV_DIR="$HOME_DIR/venv_${BRANCH_NAME}"
@@ -22,10 +26,8 @@ then
     exit 1
 fi
 
-REQ_FILE="requirements.txt"
+REQ_FILE="${CHECKOUT_DIR}/requirements.txt"
 INSTALLED_REQ_FILE="${VENV_DIR}/.installed_requirements"
-
-cd $CHECKOUT_DIR
 
 # Creëer de virtuele omgeving als deze nog niet bestaat
 if [ ! -d "$VENV_DIR" ]; then
@@ -46,8 +48,7 @@ else
     echo "Dependencies zijn up-to-date."
 fi
 
-# Navigate to the script's directory to ensure correct relative paths
-cd "$(dirname "$0")" || exit 1
+cd $CHECKOUT_DIR || exit 1
 
 # The main application loop
 while true; do
