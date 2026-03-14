@@ -10,7 +10,7 @@ set -e
 
 APP_DIR=/home/pi/MFRC522-python
 HOME_DIR=/home/pi/dooropener
-REQ_FILE="${HOME_DIR}/requirements.txt"
+REQ_FILE="${APP_DIR}/requirements.txt"
 INSTALLED_REQ_FILE="${VENV_DIR}/.installed_requirements"
 
 # This script acts as a watchdog for the main Python application.
@@ -37,9 +37,9 @@ BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
 VENV_DIR="$HOME_DIR/venv_${BRANCH_NAME}"
 
 # Controleer of python3 beschikbaar is
-if ! command -v python3 &> /dev/null
+if ! command -v /usr/bin/python3 &> /dev/null
 then
-    log "python3 is niet gevonden. Installeer Python 3 om dit script uit te voeren."
+    log "/usr/bin/python3 is niet gevonden. Installeer Python 3 om dit script uit te voeren."
     exit 1
 fi
 
@@ -50,7 +50,7 @@ if [ ! -d "$VENV_DIR" ]; then
 fi
 
 # Activeer de virtuele omgeving
-log "Activeer de virtuele omgeving in '$VENV_DIR'..."
+log "Virtuele omgeving in '$VENV_DIR' wordt geactiveerd..."
 source "$VENV_DIR/bin/activate"
 
 # Controleer of het requirements bestand is veranderd sinds de laatste installatie
