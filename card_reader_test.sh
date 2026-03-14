@@ -21,10 +21,24 @@ if [ ! -d "$VENV_DIR" ]; then
     python3 -m venv $VENV_DIR
 fi
 
-# Activeer de virtuele omgeving en installeer de dependencies
-echo "Dependencies worden geïnstalleerd..."
+# Activeer de virtuele omgeving
 source $VENV_DIR/bin/activate
-pip install -r card_reader_test_requirements.txt
+
+# Controleer op specifieke parameters om dependencies te updaten
+UPDATE_DEPENDENCIES=false
+for arg in "$@"; do
+    if [ "$arg" == "-ud" ] || [ "$arg" == "--update-dependencies" ]; then
+        UPDATE_DEPENDENCIES=true
+        break
+    fi
+done
+
+if [ "$UPDATE_DEPENDENCIES" = true ]; then
+    echo "Dependencies worden geïnstalleerd/geüpdatet..."
+    pip install -r card_reader_test_requirements.txt
+else
+    echo "Dependencies worden overgeslagen. Voer het script uit met '-ud' of '--update-dependencies' om te updaten."
+fi
 
 # Voer het testscript uit
 echo "Het card reader testscript wordt gestart. Druk op Ctrl+C om te stoppen."
