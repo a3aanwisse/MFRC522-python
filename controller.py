@@ -19,7 +19,7 @@ from requests.auth import HTTPDigestAuth
 from gpiozero import Button, OutputDevice
 from mfrc522 import MFRC522
 
-VERSION = "1.10.2" # Patch version incremented for logging user on manual relay toggle
+VERSION = "1.11.0" # Minor version incremented for adding stop_listening functionality
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
 RELAY_PIN = 17
@@ -35,10 +35,11 @@ CAMERA_URL = None
 CAMERA_USER = None
 CAMERA_PASS = None
 
-# Global control for NFC reader thread
+# Global control for NFC reader thread and ntfy listener thread
 continue_reading = False # Initially set to False, reader starts on demand
 nfc_reader_thread = None
 nfc_reader_active = False # Tracks if the NFC reader thread is currently running
+ntfy_listener_thread = None # Tracks the ntfy listener thread
 
 allowed_cards = {} # Now stores {"CARD_ID": "Gebruikersnaam"}
 last_used_card_user = None  # Stores the username of the last card used
@@ -407,6 +408,8 @@ def listen_for_ntfy_commands():
             # Listen to the stream for JSON data
             resp = requests.get(f'https://ntfy.sh/{control_topic}/json', stream=True, timeout=60)
             for line in resp.iter_lines():
+                if not continue_reading: # Check again in case continue_reading changed during iter_lines
+                    break
                 if line:
                     data = json.loads(line)
                     event_type = data.get('event')
@@ -431,9 +434,13 @@ def listen_for_ntfy_commands():
                             toggle_relay()
                         else:
                             logging.warning("Remote command ignored: Door is already closed.")
+        except requests.exceptions.Timeout:
+            logging.debug("ntfy listener timeout, reconnecting...")
         except Exception as e:
             logging.error(f"Error in remote command listener: {e}")
             time.sleep(10) # Wait before reconnecting
+    
+    logging.info('ntfy command listener stopped.')
 
 
 def get_stats():
@@ -471,7 +478,7 @@ def remove_hardware_listener(q):
 
 def _nfc_listening_loop():
     """The main loop for the NFC reader, run in a separate thread."""
-    global last_used_card_user, continue_reading, nfc_reader_active
+    global last_used_card_user, continue_reading, nfc_reader_active, ntfy_listener_thread
     logging.info('Starting NFC reader loop...')
 
     # Check if door is already open upon startup (e.g. after a reboot/update)
@@ -479,8 +486,10 @@ def _nfc_listening_loop():
         logging.info("Startup check: Door is detected as open. Resuming notification timer.")
         reed_open_door_closed()
 
-    # Start the remote listener in a background thread
-    threading.Thread(target=listen_for_ntfy_commands, daemon=True).start()
+    # Start the remote listener in a background thread if not already running
+    if not ntfy_listener_thread or not ntfy_listener_thread.is_alive():
+        ntfy_listener_thread = threading.Thread(target=listen_for_ntfy_commands, daemon=True)
+        ntfy_listener_thread.start()
     
     reader = MFRC522()
     logging.info('Started NFC reader. Waiting for cards...')
@@ -550,6 +559,29 @@ def stop_nfc_reader():
         logging.warning("NFC reader thread did not terminate gracefully.")
     nfc_reader_active = False
     return True
+
+def stop_listening():
+    """Signals all continuous listening loops (NFC, ntfy) to stop."""
+    global continue_reading, nfc_reader_thread, ntfy_listener_thread
+    logging.info("Signaling all listening loops to stop...")
+    continue_reading = False # This will stop both NFC and ntfy loops
+
+    # Wait for NFC reader thread to finish
+    if nfc_reader_thread and nfc_reader_thread.is_alive():
+        logging.info("Waiting for NFC reader thread to terminate...")
+        nfc_reader_thread.join(timeout=2)
+        if nfc_reader_thread.is_alive():
+            logging.warning("NFC reader thread did not terminate gracefully.")
+    
+    # Wait for ntfy listener thread to finish
+    if ntfy_listener_thread and ntfy_listener_thread.is_alive():
+        logging.info("Waiting for ntfy listener thread to terminate...")
+        ntfy_listener_thread.join(timeout=2)
+        if ntfy_listener_thread.is_alive():
+            logging.warning("ntfy listener thread did not terminate gracefully.")
+    
+    logging.info("All listening loops signaled to stop.")
+
 
 def get_nfc_status():
     """Returns the current status of the NFC reader (True if running, False otherwise)."""
