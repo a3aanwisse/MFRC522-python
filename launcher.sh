@@ -8,14 +8,13 @@ cd /home/pi/MFRC522-python
 
 # Haal de huidige git branch op
 BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
-
-# Maak de naam van de virtual environment op basis van de branch
+# De naam voor de virtuele omgeving
 VENV_DIR="venv_${BRANCH_NAME}"
 
 # Controleer of python3 beschikbaar is
 if ! command -v python3 &> /dev/null
 then
-    echo "python3 is niet gevonden. Installeer Python 3 om dit script uit te voeren!"
+    echo "python3 is niet gevonden. Installeer Python 3 om dit script uit te voeren."
     exit 1
 fi
 
