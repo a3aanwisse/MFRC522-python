@@ -43,6 +43,8 @@ fi
 if [ ! -d "${venv_dir}" ]; then
     log "Creating virtual environment in '${venv_dir}'..."
     python3 -m venv "${venv_dir}"
+else
+  log "Virtual environment in '${venv_dir}' is already existing."
 fi
 
 # Activate the virtual environment
