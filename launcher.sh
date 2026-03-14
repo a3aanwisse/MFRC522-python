@@ -8,9 +8,6 @@
 # Stop het script als er een fout optreedt
 set -e
 
-# Navigate to the script's directory to ensure correct relative paths
-cd "$(dirname "$0")" || exit 1
-
 HOME_DIR=/home/pi/dooropener
 CHECKOUT_DIR=/home/pi/MFRC522-python
 # Haal de huidige git branch op
@@ -49,11 +46,14 @@ else
     echo "Dependencies zijn up-to-date."
 fi
 
+# Navigate to the script's directory to ensure correct relative paths
+cd "$(dirname "$0")" || exit 1
+
 # The main application loop
 while true; do
     # Launch the Python application.
     # The config file is specified here for production deployment.
-    python3 app.py --config /home/pi/config.ini
+    python3 app.py --config $HOME_DIR/config.ini
 
     # Capture the exit status of the Python script
     STATUS=$?
@@ -64,7 +64,6 @@ while true; do
         echo "UPDATE: Application signaled for an update. Pulling latest code from git..."
         git pull
         echo "UPDATE: Git pull complete. Restarting the launcher to apply any updates to itself as well..."
-        # pip3 install -r requirements.txt
         # Use exec to replace the current process with a new one from the updated file on disk.
         # This ensures that if launcher.sh itself was updated, the new version is used.
         exec ./launcher.sh
