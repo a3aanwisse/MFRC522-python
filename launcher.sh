@@ -71,9 +71,8 @@ while true; do
     # The python app's output will be captured by the system journal via cron's configuration
     set +e
     python app.py --config "${home_dir}/config.ini"
-    set -e
-
     status=$?
+    set -e
     log "INFO: Python application exited with status ${status}."
 
     if [ "${status}" -eq 10 ]; then
