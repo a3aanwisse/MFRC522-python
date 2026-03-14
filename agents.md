@@ -1,8 +1,10 @@
 # Agent Instructies
 
+Als iets niet duidelijk is of als er meerdere oplossingsrichtingen zijn, 
+stel dan een vraag in plaats van zelf gelijk een keuze te maken!
 
 ## Platform
-Hou er rekening mee dat voorgestelde oplossing moet werken op een Raspberry Pi
+Hou er rekening mee dat voorgestelde oplossing MOET werken op een Raspberry Pi 1 Model B+!!
 
 ## Versiebeheer
 Bij iedere aanpassing in de code moet het versienummer (`VERSION`) in `controller.py` worden aangepast volgens Semantic Versioning.

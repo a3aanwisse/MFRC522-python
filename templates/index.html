@@ -77,7 +77,10 @@
                         <p>Scan de code met je <strong>camera app</strong> of open direct in de ntfy app.</p>
                         <div id="qrcode" class="d-flex justify-content-center my-3"></div>
                         <p class="text-muted small">Topic: <code>{{ ntfy_topic }}</code></p>
-                        <a href="ntfy://ntfy.sh/{{ ntfy_topic }}" class="btn btn-primary w-100">Open in App</a>
+                        <div class="d-grid gap-2">
+                            <a href="ntfy://ntfy.sh/{{ ntfy_topic }}" class="btn btn-primary">Open in App</a>
+                            <a href="https://ntfy.sh/{{ ntfy_topic }}" target="_blank" class="btn btn-outline-secondary">Open in Browser</a>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Sluiten</button>
@@ -204,7 +207,7 @@
             // Only generate if empty
             if (qrContainer.innerHTML.trim() === "") {
                 new QRCode(qrContainer, {
-                    text: "ntfy://ntfy.sh/{{ ntfy_topic }}",
+                    text: "https://ntfy.sh/{{ ntfy_topic }}",
                     width: 200,
                     height: 200
                 });
