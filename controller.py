@@ -19,7 +19,7 @@ from requests.auth import HTTPDigestAuth
 from gpiozero import Button, OutputDevice
 from mfrc522 import MFRC522
 
-VERSION = "1.9.0"
+VERSION = "1.9.1"
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
 RELAY_PIN = 17
@@ -464,7 +464,8 @@ def start_listening():
                 (status, uid) = reader.MFRC522_Anticoll()
 
                 if status == reader.MI_OK:
-                    card_id_str = "".join(str(i) for i in uid)
+                    # Convert UID bytes to a hexadecimal string
+                    card_id_str = "".join([f"{i:02X}" for i in uid])
                     
                     if card_id_str in allowed_cards:
                         last_used_card_id = card_id_str
