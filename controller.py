@@ -19,7 +19,7 @@ from requests.auth import HTTPDigestAuth
 from gpiozero import Button, OutputDevice
 from mfrc522 import MFRC522
 
-VERSION = "1.9.2" # Patch version incremented for this change
+VERSION = "1.9.3" # Patch version incremented for this change
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
 RELAY_PIN = 17
@@ -259,19 +259,25 @@ def reed_closed_door_open():
     global last_used_card_user
     logging.info('Closed door reed contact is open - garage door is opening/open.')
     
-    # Log the event BEFORE resetting the card ID
+    # Log the event. last_used_card_user is set when a card is scanned.
     log_stat_event('OPEN', last_used_card_user)
     
-    # Reset last used card on any new door opening event to detect manual opens
-    last_used_card_user = None
-    logging.info('Reset last used card user due to new door opening event.')
+    # Do NOT reset last_used_card_user here. It will be used for the 'CLOSE' event.
+    logging.info('Last used card user retained for CLOSE event.')
     broadcast_hardware_update()
 
 
 def reed_closed_door_closed():
-    global door_open_timer
+    global door_open_timer, last_used_card_user
     logging.info('Closed door reed contact is closed - garage door is closed.')
-    log_stat_event('CLOSE')
+    
+    # Log the CLOSE event with the user who opened it
+    log_stat_event('CLOSE', last_used_card_user)
+    
+    # Reset last_used_card_user AFTER logging the close event
+    last_used_card_user = None
+    logging.info('Reset last used card user after CLOSE event.')
+
     if door_open_timer and door_open_timer.is_alive():
         door_open_timer.cancel()
         logging.info('Cancelled door open timer as door is now closed.')
