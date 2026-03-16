@@ -189,6 +189,10 @@
     <script>
         // Initial NFC status from Flask
         let nfcIsActive = {{ 'true' if nfc_status else 'false' }};
+        let retryCount = 0;
+        const maxRetries = 15; // Max 15 retries
+        const initialDelay = 10000; // 10 seconds initial delay
+        const retryInterval = 5000; // 5 seconds between retries
 
         function updateNfcReaderUI() {
             const statusText = document.getElementById('nfcStatusText');
@@ -267,27 +271,38 @@
 
             // Toon laadscherm
             document.getElementById('updateOverlay').style.display = 'block';
+            retryCount = 0; // Reset retry counter
 
             // Stuur update commando
             fetch('/update', { method: 'POST' })
                 .catch(err => console.log("Server waarschijnlijk herstart...", err));
 
-            // Wacht 5 seconden en begin dan met pingen
-            setTimeout(checkServerStatus, 5000);
+            // Wacht initiële vertraging en begin dan met pingen
+            setTimeout(checkServerStatus, initialDelay);
         }
 
         function checkServerStatus() {
+            if (retryCount >= maxRetries) {
+                console.error('Maximale aantal herpogingen bereikt. Server reageert niet.');
+                alert('De server reageert niet na meerdere pogingen. Controleer de applicatie handmatig.');
+                document.getElementById('updateOverlay').style.display = 'none'; // Verberg overlay
+                return;
+            }
+
             fetch('/', { method: 'HEAD' })
                 .then(response => {
                     if (response.ok) {
-                        window.location.reload();
+                        window.location.reload(); // Server is weer bereikbaar, herlaad de pagina
                     } else {
-                        setTimeout(checkServerStatus, 2000);
+                        retryCount++;
+                        console.log(`Server nog niet bereikbaar. Herpoging ${retryCount}/${maxRetries}...`);
+                        setTimeout(checkServerStatus, retryInterval); // Probeer opnieuw na interval
                     }
                 })
                 .catch(() => {
-                    // Nog steeds offline, probeer opnieuw over 2 seconden
-                    setTimeout(checkServerStatus, 2000);
+                    retryCount++;
+                    console.log(`Server nog niet bereikbaar (netwerkfout). Herpoging ${retryCount}/${maxRetries}...`);
+                    setTimeout(checkServerStatus, retryInterval); // Probeer opnieuw na interval
                 });
         }
 
