@@ -64,7 +64,7 @@ def read_reed_open_door():
 
 if __name__ == '__main__':
     try:
-        appThread = threading.Thread(target=lambda: app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False))
+        appThread = threading.Thread(target=lambda: app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=False))
         appThread.start()
         controller.setup()
         controller.start_listening()
