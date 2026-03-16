@@ -28,12 +28,13 @@ try:
         raise FileNotFoundError(f"Config file not found at '{CONFIG_FILE_PATH}'")
         
     config.read(CONFIG_FILE_PATH)
+    logging.info(f"Successfully loaded config from {CONFIG_FILE_PATH}")
     username = config.get('credentials', 'username')
     password = config.get('credentials', 'password')
     users = {
         username: generate_password_hash(password)
     }
-    logging.info(f"Successfully loaded credentials from {CONFIG_FILE_PATH}")
+    logging.info(f"Successfully loaded credentials")
 except (configparser.NoSectionError, configparser.NoOptionError, FileNotFoundError) as e:
     logging.error(f"Could not load configuration from '{CONFIG_FILE_PATH}': {e}")
     logging.error("Please provide a valid config file using the --config argument.")
