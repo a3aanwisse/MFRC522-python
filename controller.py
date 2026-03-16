@@ -13,7 +13,7 @@ from mfrc522 import SimpleMFRC522
 RELAY_PIN = 17
 REED_CONTACT_CLOSED_DOOR_PIN = 22
 REED_CONTACT_OPEN_DOOR_PIN = 23
-VALID_CARD_IDS_FILE = 'valid_card_ids.txt'
+VALID_CARD_IDS_FILE = '/home/pi/dooropener/data/valid_card_ids.txt'
 
 continue_reading = True
 allowed_card_ids = []
