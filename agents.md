@@ -14,3 +14,7 @@ Bij iedere aanpassing in de code moet het versienummer (`VERSION`) in `controlle
 *   **Major (X.0.0):** Grote wijzigingen die niet backwards-compatible zijn.
 *   **Minor (x.Y.0):** Nieuwe functionaliteit die backwards-compatible is.
 *   **Patch (x.y.Z):** Bugfixes of kleine verbeteringen.
+
+## Overig
+Negeer de bestanden in de volgende mappen:
+- presentatie
