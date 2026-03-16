@@ -274,7 +274,7 @@ def nfc_stop():
 
 if __name__ == '__main__':
     try:
-        controller.setup(config)
+        controller.setup(config, CONFIG_FILE_PATH) # Pass CONFIG_FILE_PATH to controller setup
         controller.start_nfc_reader() # Start NFC reader by default
 
         flask_thread = None

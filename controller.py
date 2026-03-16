@@ -19,7 +19,7 @@ from requests.auth import HTTPDigestAuth
 from gpiozero import Button, OutputDevice
 from mfrc522 import MFRC522
 
-VERSION = "1.12.0" # Minor version incremented for config management via UI
+VERSION = "1.12.1" # Patch version incremented for config file path fix
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
 RELAY_PIN = 17
@@ -53,15 +53,19 @@ stats_lock = threading.Lock()
 stat_listeners = [] # List of queues to notify on updates
 hardware_listeners = [] # List of queues for hardware status updates
 
-# Path to the config file (assuming it's in the same directory as controller.py)
-CONFIG_FILE_PATH = os.path.join(os.path.dirname(__file__), 'config.ini')
+# Global variable to store the actual config file path
+_CONTROLLER_CONFIG_FILE_PATH = None
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def _get_config_parser():
     """Helper to get a ConfigParser instance with the current config."""
+    if not _CONTROLLER_CONFIG_FILE_PATH:
+        logging.error("Config file path not set in controller. Call setup() first.")
+        raise RuntimeError("Config file path not initialized.")
+    
     config = configparser.ConfigParser()
-    config.read(CONFIG_FILE_PATH)
+    config.read(_CONTROLLER_CONFIG_FILE_PATH)
     return config
 
 def load_config(config_parser_instance=None):
@@ -87,9 +91,10 @@ def load_config(config_parser_instance=None):
         return False
 
 
-def setup(config_parser_instance):
+def setup(config_parser_instance, config_file_path):
     """Sets up the controller with the given configuration."""
-    global relay
+    global relay, _CONTROLLER_CONFIG_FILE_PATH
+    _CONTROLLER_CONFIG_FILE_PATH = config_file_path # Store the path
 
     if not load_config(config_parser_instance):
         sys.exit(1)
@@ -648,7 +653,7 @@ def update_config_items(updates):
 
     if updated_any:
         try:
-            with open(CONFIG_FILE_PATH, 'w') as configfile:
+            with open(_CONTROLLER_CONFIG_FILE_PATH, 'w') as configfile:
                 config.write(configfile)
             logging.info("config.ini file successfully updated on disk.")
             # Reload the in-memory config to reflect changes
