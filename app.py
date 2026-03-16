@@ -106,6 +106,32 @@ def reload_config():
     return redirect(url_for('index'))
 
 
+@app.route('/config', methods=['GET', 'POST'])
+@auth.login_required
+def manage_config():
+    if request.method == 'POST':
+        updates = {}
+        for key, value in request.form.items():
+            updates[key] = value
+        
+        if controller.update_config_items(updates):
+            flash('Configuratie succesvol bijgewerkt.', 'success')
+            # After updating, reload the in-memory config in app.py as well
+            # This is crucial for changes like NTFY_TOPIC to take effect immediately
+            try:
+                config.read(CONFIG_FILE_PATH)
+                controller.load_config(config) # Reload controller's internal config
+            except Exception as e:
+                logging.error(f"Error reloading config after update: {e}")
+                flash(f"Fout bij herladen van de configuratie na opslaan: {e}", "danger")
+        else:
+            flash('Fout bij het bijwerken van de configuratie.', 'danger')
+        return redirect(url_for('manage_config'))
+    else:
+        current_config = controller.get_all_config_items()
+        return render_template('config.html', config=current_config)
+
+
 @app.route('/cards', methods=['GET', 'POST'])
 @auth.login_required
 def manage_cards():

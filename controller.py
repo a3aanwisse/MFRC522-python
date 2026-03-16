@@ -19,7 +19,7 @@ from requests.auth import HTTPDigestAuth
 from gpiozero import Button, OutputDevice
 from mfrc522 import MFRC522
 
-VERSION = "1.11.0" # Minor version incremented for adding stop_listening functionality
+VERSION = "1.12.0" # Minor version incremented for config management via UI
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
 RELAY_PIN = 17
@@ -53,12 +53,22 @@ stats_lock = threading.Lock()
 stat_listeners = [] # List of queues to notify on updates
 hardware_listeners = [] # List of queues for hardware status updates
 
+# Path to the config file (assuming it's in the same directory as controller.py)
+CONFIG_FILE_PATH = os.path.join(os.path.dirname(__file__), 'config.ini')
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+def _get_config_parser():
+    """Helper to get a ConfigParser instance with the current config."""
+    config = configparser.ConfigParser()
+    config.read(CONFIG_FILE_PATH)
+    return config
 
-def load_config(config):
+def load_config(config_parser_instance=None):
     """Loads configuration values from the config object."""
     global VALID_CARDS_FILE, NTFY_TOPIC, STATS_FILE, DOOR_OPEN_TIMEOUT, CAMERA_URL, CAMERA_USER, CAMERA_PASS
+
+    config = config_parser_instance if config_parser_instance else _get_config_parser()
 
     try:
         VALID_CARDS_FILE = config.get('paths', 'valid_cards_file')
@@ -77,11 +87,11 @@ def load_config(config):
         return False
 
 
-def setup(config):
+def setup(config_parser_instance):
     """Sets up the controller with the given configuration."""
     global relay
 
-    if not load_config(config):
+    if not load_config(config_parser_instance):
         sys.exit(1)
 
     relay = OutputDevice(RELAY_PIN, active_high=True, initial_value=False)
@@ -587,3 +597,66 @@ def get_nfc_status():
     """Returns the current status of the NFC reader (True if running, False otherwise)."""
     global nfc_reader_active
     return nfc_reader_active
+
+def get_all_config_items():
+    """
+    Reads the config.ini file and returns all configuration items as a dictionary,
+    excluding sensitive fields like usernames and passwords.
+    """
+    config = _get_config_parser()
+    all_config = {}
+    sensitive_fields = {
+        'credentials': ['username', 'password'],
+        'camera': ['username', 'password']
+    }
+
+    for section in config.sections():
+        all_config[section] = {}
+        for key, value in config.items(section):
+            if section in sensitive_fields and key in sensitive_fields[section]:
+                all_config[section][key] = '********' # Mask sensitive info
+            else:
+                all_config[section][key] = value
+    return all_config
+
+def update_config_items(updates):
+    """
+    Updates the config.ini file with the provided dictionary of updates.
+    Sensitive fields (usernames, passwords) cannot be updated via this function.
+    """
+    config = _get_config_parser()
+    sensitive_fields = {
+        'credentials.username', 'credentials.password',
+        'camera.username', 'camera.password'
+    }
+    
+    updated_any = False
+    for key_path, new_value in updates.items():
+        if key_path in sensitive_fields:
+            logging.warning(f"Attempted to update sensitive field '{key_path}'. Operation blocked.")
+            continue
+
+        section, key = key_path.split('.', 1)
+        if not config.has_section(section):
+            config.add_section(section)
+        
+        current_value = config.get(section, key, fallback=None)
+        if current_value != new_value:
+            config.set(section, key, new_value)
+            updated_any = True
+            logging.info(f"Config updated: [{section}]{key} = {new_value}")
+
+    if updated_any:
+        try:
+            with open(CONFIG_FILE_PATH, 'w') as configfile:
+                config.write(configfile)
+            logging.info("config.ini file successfully updated on disk.")
+            # Reload the in-memory config to reflect changes
+            load_config(config)
+            return True
+        except Exception as e:
+            logging.error(f"Failed to write config.ini file: {e}")
+            return False
+    else:
+        logging.info("No changes detected for config.ini.")
+        return False
