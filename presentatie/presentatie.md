@@ -3,6 +3,7 @@ marp: true
 theme: gaia
 color: #f9ce4e
 transition: iris-in
+paginate: true
 backgroundColor: #212529
 #header: "![logo](miniconf-logo-letters-yellow-transparant-200x108.png)"
 footer: "Don't leave me open! - mini.conf 2026"
@@ -30,8 +31,7 @@ footer: "Don't leave me open! - mini.conf 2026"
 <sup>Adriaan Wisse</sup>
 
 <!--
-These are my speaker notes. The audience won't see them,
-but they'll export to PowerPoint's notes section.
+TODO speakernotes
 -->
 
 ---
@@ -43,17 +43,15 @@ but they'll export to PowerPoint's notes section.
 ---
 
 ## 2021 - Het initiële probleem 🚨:
-Acties om fiets in garage te zetten:
-* Open de voordeur
-* Druk op de garagedeur knop
-* Sluit de voordeur
-* Wacht
-* Zet fiets in de garage
+Acties om fiets in garage te zetten
+1. Open de voordeur
+2. Druk op de garagedeur knop
+3. Sluit de voordeur
+4. Wacht
+5. Zet fiets in de garage
 <div class="right small italic">TL;DR: Lui</div>
 
 ---
-
-<!-- _transition: flip -->
 
 ## 2021 - De oplossing 💡:
 Garage openen (en sluiten) door een NFC-tag te scannen.
@@ -64,17 +62,19 @@ Garage openen (en sluiten) door een NFC-tag te scannen.
 
 ---
 
+<!-- _transition: flip -->
 ## 2021 - De hardware 🛠️:
-* Hörmann garagedeur opener
-* Raspberry Pi
+- Hörmann garagedeur opener
+- Raspberry Pi
   _Raspberry Pi 1 Model B+_
-* NFC lezer
+- NFC lezer
   _NFC RFID RC522_
-* Relais
+- Relais
   _3.3V 1 kanaals_
 
 ---
 
+<!-- _transition: flip -->
 <!-- _paginate: skip -->
 <!-- _footer: "" -->
 ![h:640](schema5.jpg)
@@ -84,6 +84,13 @@ Garage openen (en sluiten) door een NFC-tag te scannen.
 <!-- _paginate: skip -->
 <!-- _footer: "" -->
 TODO - foto's echte situatie
+
+---
+
+<!-- _class: lead -->
+
+# 2021 - De DIY Garagedeuropener
+## QUICK DEMO 
 
 ---
 
@@ -98,14 +105,14 @@ TODO - foto's echte situatie
 <br>
 <br>
 <br>
-<p class="right"><i>en daar pas achterkomen als je weer thuiskomt.</i></p>
+<p class="right"><i>en daar pas achterkomen als je weer thuiskomt 🙈</i></p>
 
 ---
 
 TODO - slide of speaker notes
 ## De oorzaken 🙈:  
-  * Vergeten op de sluitknop te drukken.
-  * Blokkeren van de deur waardoor hij weer (deels) opent.
+  - Vergeten op de sluitknop te drukken.
+  - Blokkeren van de deur waardoor hij weer (deels) opent.
 
 ---
 
@@ -125,8 +132,8 @@ TODO - slide of speaker notes
 * Jij bent de regisseur, generatieve AI is de programmeur.
 * **De belofte:** 
   * Niet meer googlen
-  * Fun!
   * Géén API-documentatie meer doorspitten.
+  * Voor luie mensen met weinig kennis 
 * Perfect voor snelle, iteratieve DIY-projecten.
 
 ---
@@ -135,7 +142,9 @@ TODO - slide of speaker notes
 
 1. **Hardware:** Magnetische deursensoren
    <div class="right small italic">ook wel bekend als maak- of reed contact</div>
+\
 2. **IDE:** PyCharm Community
+\
 3. **AI Tool:** Gemini Pro via Gemini Code Assist plugin 
 
 ---
@@ -166,14 +175,32 @@ AI heeft context en kaders nodig. Tijd voor **State Machines** en **Timers**.
 
 # DEMO TIME! 🤞
 
-*(Bidden tot de demo-goden)*
+---
+
+## Lessons learned
+
+* Veel geleerd, zeker op gebied van Python en bash!
+  * Uitleg gegeven door Gemini is echt handig en leerzaam
+* Complexe dingen zijn opeens simpel en binnen handbereik!
+* Veel Gemini Pro 2.5 gebruikt i.v.m. licentie, maar 2.5 Flash werkt ook al super en veel sneller!
+* Het maakt je enthousiast
+
+---
+
+## Frustraties
+
+* Stabiliteit plugin
+  * Iedere keer opnieuw inloggen
+  * Nieuwere modellen pas beschikbaar na opnieuw inloggen & herstart IDE
+    _Maar die bleek ik ook vaak helemaal niet nodig te hebben_
+  * TODO
 
 ---
 
 ## Conclusies & Takeaways
 
-* 🔄 **Vibe coding is itereren:** Jouw eerste prompt is nooit de laatste.
-* 🧠 **Jij blijft de architect:** AI kent de syntax, jij bepaalt de logica in de echte wereld.
+* 🔄 **Vibe coding is itereren:** Jouw eerste prompt is nooit de laatste!
+* 🧠 **Jij blijft in control:** AI kent de syntax, jij bepaalt de logica in de echte wereld.
 * 🚀 **Call to Action:** Heb je nog een onafgemaakt DIY-project liggen? Gooi er een vibe tegenaan!
 
 ---
