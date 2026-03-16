@@ -4,6 +4,9 @@
 # Stop het script als er een fout optreedt
 set -e
 
+# Navigate to the script's directory to ensure correct relative paths
+cd "$(dirname "$0")" || exit 1
+
 HOME_DIR=/home/pi/dooropener
 CHECKOUT_DIR=/home/pi/MFRC522-python
 # Haal de huidige git branch op
