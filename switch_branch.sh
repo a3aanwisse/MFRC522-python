@@ -12,4 +12,4 @@ echo "Switch branch naar experiments-2"
 git checkout experiments-2
 
 echo "Launch!"
-/home/pi/MFRC522-python/launcher.sh >/home/pi/data/dooropener/logs/dooropener 2>&1
+./home/pi/MFRC522-python/launcher.sh >/home/pi/data/dooropener/logs/dooropener 2>&1
