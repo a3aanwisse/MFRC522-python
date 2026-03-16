@@ -19,7 +19,7 @@ from requests.auth import HTTPDigestAuth
 from gpiozero import Button, OutputDevice
 from mfrc522 import MFRC522
 
-VERSION = "1.12.1" # Patch version incremented for config file path fix
+VERSION = "1.12.2" # Patch version incremented for configparser.InterpolationSyntaxError fix
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
 RELAY_PIN = 17
@@ -64,7 +64,8 @@ def _get_config_parser():
         logging.error("Config file path not set in controller. Call setup() first.")
         raise RuntimeError("Config file path not initialized.")
     
-    config = configparser.ConfigParser()
+    # Disable interpolation to prevent issues with '%' characters in config values
+    config = configparser.ConfigParser(interpolation=None)
     config.read(_CONTROLLER_CONFIG_FILE_PATH)
     return config
 
