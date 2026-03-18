@@ -2,7 +2,8 @@
 marp: true
 theme: gaia
 color: #f9ce4e
-transition: iris-in
+transition: coverflow
+#transition: iris-in
 paginate: true
 backgroundColor: #212529
 #header: "![logo](miniconf-logo-letters-yellow-transparant-200x108.png)"
@@ -23,6 +24,11 @@ footer: "Don't leave me open! - mini.conf 2026"
 
 <!-- _class: lead -->
 <!-- _paginate: skip -->
+<!-- _footer: "" -->
+
+![bg](presentation2.png)
+
+---
 
 # Don't leave me open!
 ### A pushing vibe coding adventure
@@ -33,28 +39,34 @@ footer: "Don't leave me open! - mini.conf 2026"
 <!--
 TODO speakernotes
 -->
+![bg right](presentation.png)
 
 ---
 
 <!-- _class: lead -->
 
-# 2021 - De DIY Garagedeuropener
+# '21 - De DIY Garagedeuropener
 
 ---
 
-## 2021 - Het initiële probleem 🚨:
-Acties om fiets in garage te zetten
+## '21 - Het initiële probleem 🚨:
+Acties om je fiets in de garage te zetten:
 1. Open de voordeur
-2. Druk op de garagedeur knop
+2. Druk op de garagedeur knop in de hal
 3. Sluit de voordeur
 4. Wacht
 5. Zet fiets in de garage
+6. Sluit de garage via de knop in de garage zelf
 <div class="right small italic">TL;DR: Lui</div>
+
+<!--
+Via garage kan je ook huis in
+-->
 
 ---
 
-## 2021 - De oplossing 💡:
-Garage openen (en sluiten) door een NFC-tag te scannen.
+## '21 - De oplossing 💡:
+Garage openen (en sluiten) d.m.v. een NFC tag
 <br>
 <br>
 <br>
@@ -63,43 +75,60 @@ Garage openen (en sluiten) door een NFC-tag te scannen.
 ---
 
 <!-- _transition: flip -->
-## 2021 - De hardware 🛠️:
+## '21 - De hardware:
 - Hörmann garagedeur opener
 - Raspberry Pi
   _Raspberry Pi 1 Model B+_
 - NFC lezer
   _NFC RFID RC522_
+  ![bg vertical right w:300](nfc.png)
 - Relais
   _3.3V 1 kanaals_
+  ![bg vertical right w:300](relais.png)
 
 ---
 
 <!-- _transition: flip -->
 <!-- _paginate: skip -->
 <!-- _footer: "" -->
-![h:640](schema5.jpg)
+![bg fit](schema1.jpg)
 
 ---
 
 <!-- _paginate: skip -->
 <!-- _footer: "" -->
-TODO - foto's echte situatie
+![bg vertical 60%](raspberry_pi.jpg)
+![bg 60%](kastje_2.jpg) 
 
 ---
 
+<!-- _transition: flip -->
 <!-- _class: lead -->
 
-# 2021 - De DIY Garagedeuropener
+# '21 - De DIY Garagedeuropener
 ## QUICK DEMO 
+
+---
+
+<!-- _paginate: skip -->
+![w:550px](old-1.png)
+![w:550px](old-2.png)
+![bg right 60%](old-3.png) 
+
+<!--
+We zijn immers backend developers!
+-->
 
 ---
 
 <!-- _transition: drop 1s -->
 <!-- _class: lead -->
-# Heden - Een nieuw probleem
+# Daarna - Een nieuw probleem
 
 ---
 
+<!-- _transition: in-out -->
+<br>
 <br>
 <h2> Vergeten de garagedeur te sluiten...</h2>
 <br>
@@ -109,43 +138,63 @@ TODO - foto's echte situatie
 
 ---
 
-TODO - slide of speaker notes
-## De oorzaken 🙈:  
+<br>
+<br>
+
+# De oorzaken 🙈:  
   - Vergeten op de sluitknop te drukken.
   - Blokkeren van de deur waardoor hij weer (deels) opent.
 
 ---
 
-## De wens 🛒:
-- Een **intrusieve** melding op onze telefoons
-  als de garagedeur niet gesloten is na x minuten
+## '26 - De wensen:
+- Het ontvangen van een notificatie op onze telefoons als de garagedeur te lang openstaat
 - Moet werken op iOS en Android
-- Veilig
+- Het moet veilig zijn
+- Mogelijkheid tot sluiten van de garagedeur via notificatie
 
 ---
 
 ## Aanpak: "Vibe Coding" 🤖
+<br>
+<br>
 
 **Vibe Coding = Code schrijven in natuurlijke taal**
-<div class="right small">en zonder onder de motorkap te kijken</div>
+<br>
+<br>
 
-* Jij bent de regisseur, generatieve AI is de programmeur.
-* **De belofte:** 
-  * Niet meer googlen
-  * Géén API-documentatie meer doorspitten.
-  * Voor luie mensen met weinig kennis 
-* Perfect voor snelle, iteratieve DIY-projecten.
+<div class="right small">zonder onder de motorkap te kijken</div>
+
+---
+
+## Vibe Coding
+* Jij bent de regisseur, generatieve AI is de ervaren programmeur
+
+* **Het idee:** 
+  - Niet meer urenlang googlen en docs doorspitten
+  - Snelle iteraties: "Maak dit, test dit, fix dat"
+  - Focus op de _flow_ en het resultaat, minder op de code
+  - Voor luie mensen met weinig kennis en ervaring
 
 ---
 
 ## De Setup & Tech Stack
-
-1. **Hardware:** Magnetische deursensoren
+1) **Hardware:** Magnetische deursensoren
    <div class="right small italic">ook wel bekend als maak- of reed contact</div>
-\
-2. **IDE:** PyCharm Community
-\
-3. **AI Tool:** Gemini Pro via Gemini Code Assist plugin 
+   <img src="reed.jpg" width="250px" align="right"/>
+   <br>
+   <br>
+   
+2) **IDE:** PyCharm Community
+   <br>
+
+3) **AI Tool:** Gemini Pro via Gemini Code Assist plugin
+   <img src="gemini-code-assist.png" width="400px" />
+
+<!--
+  PyCharm Community: hobby project, geen licentie voorhanden
+  Gemini Pro - 3 maanden gratis via Google One
+-->
 
 ---
 
@@ -173,17 +222,32 @@ AI heeft context en kaders nodig. Tijd voor **State Machines** en **Timers**.
 
 ---
 
+<!-- _class: lead -->
 # DEMO TIME! 🤞
+(<a href="http://192.168.68.110:5000/" target="_blank">http://192.168.68.110:5000/</a>)
 
 ---
 
 ## Lessons learned
 
-* Veel geleerd, zeker op gebied van Python en bash!
-  * Uitleg gegeven door Gemini is echt handig en leerzaam
-* Complexe dingen zijn opeens simpel en binnen handbereik!
-* Veel Gemini Pro 2.5 gebruikt i.v.m. licentie, maar 2.5 Flash werkt ook al super en veel sneller!
-* Het maakt je enthousiast
+* Veel geleerd, zeker op gebied van Python en bash
+  * Uitleg gegeven door Gemini is handig en vaak ook leerzaam
+* Complexe dingen zijn opeens simpel en binnen handbereik
+* Veel Gemini 2.5 Pro gebruikt i.v.m. beschikbaarheid licentie, maar 2.5 Flash werkt ook al super en veel sneller
+* Je wordt er enthousiast van
+* Gemini Code Assist plugin is matig
+
+---
+
+## Resultaat enthousiasme
+
+* Scope creep :-)
+  - Gebruik van Server-Sent Events
+  - Beheer configuratie en kaarten
+  - Statistieken
+  - Update functie
+  - Robuuster en stabieler
+  - ...
 
 ---
 
@@ -193,7 +257,8 @@ AI heeft context en kaders nodig. Tijd voor **State Machines** en **Timers**.
   * Iedere keer opnieuw inloggen
   * Nieuwere modellen pas beschikbaar na opnieuw inloggen & herstart IDE
     _Maar die bleek ik ook vaak helemaal niet nodig te hebben_
-  * TODO
+  * Amper verschil agent / ask / outline mode
+  * Agent mode is beperkt
 
 ---
 
@@ -205,24 +270,21 @@ AI heeft context en kaders nodig. Tijd voor **State Machines** en **Timers**.
 
 ---
 
+<!-- _class: lead -->
+
 # Vragen?
 adriaan.wisse@group9.nl
 
 ---
 
 Niet vergeten:
-- Stabiliteit plugin
-- Iedere keer opnieuw inloggen
-- Amper verschil agent / ask / outline mode
-- Nieuwere modellen pas beschikbaar na opnieuw inloggen & herstart IDE
 - Erg veel excuses
 - Goede uitleg!
-- Veel pro gebruikt ivm licentie, maar 2.5 Flash werkt ook al super en veel sneller!
 - Ik gebruikte zelf een mix van NL en ENG. Resulteert ook in die mix in code
-- 
+ 
 - I will do this and that (modify method ABC) - maar toch niet!
 - ( En als je er dan op wijst:
 My apologies, I somehow missed making the edits to controller.py during our earlier conversation, even though I mentioned them!)
+- 
 - Vergeet afspraken in agents.md :-( Moet je echt attachen
 - Hallucineren + sorry, sorry, echt heel erg sorry, laatste keer, nu echt goed :-)
-- Agent mode is via deze plugin niet echt agent mode. Copilot voert zelf instructies uit op cmd line.
