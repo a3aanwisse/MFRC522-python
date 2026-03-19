@@ -5,6 +5,8 @@ stel dan een vraag in plaats van zelf gelijk een keuze te maken!
 
 Als je backend code aanpast, vergeet de bijbehorende frontend code niet!
 
+Ik hoef geen excuses als er iets misgaat!
+
 ## Platform
 Hou er rekening mee dat voorgestelde oplossing MOET werken op een Raspberry Pi 1 Model B+!!
 
