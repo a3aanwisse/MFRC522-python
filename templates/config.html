@@ -39,12 +39,19 @@
                     </div>
                     <div class="card-body">
                         {% for key, value in keys.items() %}
-                            <div class="form-group row">
-                                <label for="{{ section }}_{{ key }}" class="col-sm-4 col-form-label">{{ key.replace('_', ' ').capitalize() }}:</label>
-                                <div class="col-sm-8">
-                                    <input type="text" class="form-control" id="{{ section }}_{{ key }}" name="{{ section }}.{{ key }}" value="{{ value }}">
+                            {% if section == 'ntfy' and key == 'enabled' %}
+                                <div class="form-group form-check">
+                                    <input type="checkbox" class="form-check-input" id="ntfyEnabled" name="ntfy.enabled" value="True" {% if value == 'True' %}checked{% endif %}>
+                                    <label class="form-check-label" for="ntfyEnabled">ntfy Notificaties Inschakelen</label>
                                 </div>
-                            </div>
+                            {% else %}
+                                <div class="form-group row">
+                                    <label for="{{ section }}_{{ key }}" class="col-sm-4 col-form-label">{{ key.replace('_', ' ').capitalize() }}:</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control" id="{{ section }}_{{ key }}" name="{{ section }}.{{ key }}" value="{{ value }}">
+                                    </div>
+                                </div>
+                            {% endif %}
                         {% endfor %}
                     </div>
                 </div>
