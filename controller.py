@@ -19,7 +19,7 @@ from requests.auth import HTTPDigestAuth
 from gpiozero import Button, OutputDevice
 from mfrc522 import MFRC522
 
-VERSION = "1.12.6" # Patch version incremented for correct handling of ntfy.enabled checkbox
+VERSION = "1.12.7" # Patch version incremented for remote close confirmation
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
 RELAY_PIN = 17
@@ -47,6 +47,7 @@ ntfy_listener_thread = None # Tracks the ntfy listener thread
 allowed_cards = {} # Now stores {"CARD_ID": "Gebruikersnaam"}
 last_used_card_user = None  # Stores the username of the last card used
 active_close_token = None # Stores the unique token for the current open session
+remote_close_pending_confirmation = False # New: Flag to indicate if a remote close confirmation is pending
 
 relay: OutputDevice = None
 reed_closed_door: Button = None
@@ -346,8 +347,26 @@ def reed_closed_door_open():
     door_open_timer.start()
 
 
+def send_remote_close_confirmation():
+    """Sends a ntfy notification confirming the remote close action."""
+    if not NTFY_ENABLED:
+        logging.info('ntfy notifications are disabled. Skipping remote close confirmation.')
+        return
+    if not NTFY_TOPIC or NTFY_TOPIC == 'your_ntfy_topic_here':
+        logging.error('ntfy topic is not configured in config.ini. Cannot send remote close confirmation.')
+        return
+
+    logging.info(f'Sending remote close confirmation to ntfy topic: {NTFY_TOPIC}')
+    try:
+        headers = {'Title': 'Garagedeur Gesloten', 'Priority': 'default'}
+        requests.post(f'https://ntfy.sh/{NTFY_TOPIC}', data='De garagedeur is succesvol gesloten via remote commando.'.encode('utf-8'), headers=headers)
+        logging.info('Successfully sent remote close confirmation.')
+    except Exception as e:
+        logging.error(f'Failed to send remote close confirmation: {e}')
+
+
 def reed_closed_door_closed():
-    global door_open_timer, last_used_card_user
+    global door_open_timer, last_used_card_user, remote_close_pending_confirmation
     logging.info('Closed door reed contact is closed - garage door is closed.')
     
     # Log the CLOSE event with the user who opened it
@@ -361,6 +380,12 @@ def reed_closed_door_closed():
         door_open_timer.cancel()
         logging.info('Cancelled door open timer as door is now closed.')
     broadcast_hardware_update()
+
+    # Send confirmation if a remote close was pending
+    if remote_close_pending_confirmation:
+        send_remote_close_confirmation()
+        remote_close_pending_confirmation = False
+        logging.info("Remote close confirmation sent and flag reset.")
 
 
 def reed_open_door_open():
@@ -467,7 +492,7 @@ def send_ntfy_notification(is_test=False):
 
 def listen_for_ntfy_commands():
     """Listens to the ntfy topic for remote commands."""
-    global active_close_token, continue_ntfy_listening
+    global active_close_token, continue_ntfy_listening, remote_close_pending_confirmation
     if not NTFY_TOPIC:
         return
 
@@ -503,6 +528,7 @@ def listen_for_ntfy_commands():
                         if reed_closed_door and not reed_closed_door.is_pressed:
                             logging.info("Safety check passed: Door is open. Closing now.")
                             toggle_relay()
+                            remote_close_pending_confirmation = True # Set flag for confirmation
                         else:
                             logging.warning("Remote command ignored: Door is already closed.")
         except requests.exceptions.Timeout:
