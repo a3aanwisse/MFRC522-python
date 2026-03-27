@@ -19,7 +19,7 @@ from requests.auth import HTTPDigestAuth
 from gpiozero import Button, OutputDevice
 from mfrc522 import MFRC522
 
-VERSION = "1.12.2" # Patch version incremented for configparser.InterpolationSyntaxError fix
+VERSION = "1.12.6" # Patch version incremented for correct handling of ntfy.enabled checkbox
 
 # BE AWARE, THESE ARE (G)PIOS, NOT PINS
 RELAY_PIN = 17
@@ -34,11 +34,14 @@ DOOR_OPEN_TIMEOUT = 120 # Default value in seconds
 CAMERA_URL = None
 CAMERA_USER = None
 CAMERA_PASS = None
+NTFY_ENABLED = False # New: Global flag to enable/disable ntfy notifications
 
 # Global control for NFC reader thread and ntfy listener thread
 continue_reading = False # Initially set to False, reader starts on demand
 nfc_reader_thread = None
 nfc_reader_active = False # Tracks if the NFC reader thread is currently running
+
+continue_ntfy_listening = False # New flag for ntfy listener
 ntfy_listener_thread = None # Tracks the ntfy listener thread
 
 allowed_cards = {} # Now stores {"CARD_ID": "Gebruikersnaam"}
@@ -71,7 +74,7 @@ def _get_config_parser():
 
 def load_config(config_parser_instance=None):
     """Loads configuration values from the config object."""
-    global VALID_CARDS_FILE, NTFY_TOPIC, STATS_FILE, DOOR_OPEN_TIMEOUT, CAMERA_URL, CAMERA_USER, CAMERA_PASS
+    global VALID_CARDS_FILE, NTFY_TOPIC, STATS_FILE, DOOR_OPEN_TIMEOUT, CAMERA_URL, CAMERA_USER, CAMERA_PASS, NTFY_ENABLED
 
     config = config_parser_instance if config_parser_instance else _get_config_parser()
 
@@ -79,6 +82,7 @@ def load_config(config_parser_instance=None):
         VALID_CARDS_FILE = config.get('paths', 'valid_cards_file')
         NTFY_TOPIC = config.get('ntfy', 'topic')
         DOOR_OPEN_TIMEOUT = config.getint('ntfy', 'door_open_timeout', fallback=120)
+        NTFY_ENABLED = config.getboolean('ntfy', 'enabled', fallback=False) # New: Read ntfy enabled status
         STATS_FILE = config.get('paths', 'stats_file', fallback='stats.json')
         CAMERA_URL = config.get('camera', 'url', fallback=None)
         CAMERA_USER = config.get('camera', 'username', fallback=None)
@@ -92,6 +96,38 @@ def load_config(config_parser_instance=None):
         return False
 
 
+def start_ntfy_listener():
+    """Starts the ntfy command listener in a separate thread."""
+    global ntfy_listener_thread, continue_ntfy_listening
+    if ntfy_listener_thread and ntfy_listener_thread.is_alive():
+        logging.warning("ntfy listener is already running.")
+        return False
+    
+    if not NTFY_ENABLED:
+        logging.info("ntfy listener not started: ntfy is disabled in config.")
+        return False
+
+    logging.info('Starting ntfy command listener thread...')
+    continue_ntfy_listening = True
+    ntfy_listener_thread = threading.Thread(target=listen_for_ntfy_commands, daemon=True)
+    ntfy_listener_thread.start()
+    return True
+
+def stop_ntfy_listener():
+    """Stops the ntfy command listener thread."""
+    global ntfy_listener_thread, continue_ntfy_listening
+    if not ntfy_listener_thread or not ntfy_listener_thread.is_alive():
+        logging.warning("ntfy listener is not running.")
+        return False
+    
+    logging.info('Stopping ntfy command listener thread...')
+    continue_ntfy_listening = False
+    ntfy_listener_thread.join(timeout=2) # Give the thread a chance to finish
+    if ntfy_listener_thread.is_alive():
+        logging.warning("ntfy listener thread did not terminate gracefully.")
+    return True
+
+
 def setup(config_parser_instance, config_file_path):
     """Sets up the controller with the given configuration."""
     global relay, _CONTROLLER_CONFIG_FILE_PATH
@@ -102,6 +138,12 @@ def setup(config_parser_instance, config_file_path):
 
     relay = OutputDevice(RELAY_PIN, active_high=True, initial_value=False)
     setup_reed_contacts()
+
+    # Start the remote listener in a background thread if enabled
+    if NTFY_ENABLED:
+        start_ntfy_listener()
+    else:
+        logging.info("ntfy is disabled in config.ini. Remote command listener will not start.")
 
 
 def run_io_tasks_in_parallel(tasks):
@@ -284,7 +326,7 @@ def read_reed_open_door():
 
 
 def reed_closed_door_open():
-    global last_used_card_user
+    global last_used_card_user, door_open_timer
     logging.info('Closed door reed contact is open - garage door is opening/open.')
     
     # Log the event. last_used_card_user is set when a card is scanned.
@@ -293,6 +335,15 @@ def reed_closed_door_open():
     # Do NOT reset last_used_card_user here. It will be used for the 'CLOSE' event.
     logging.info('Last used card user retained for CLOSE event.')
     broadcast_hardware_update()
+
+    # Start the door open timer as soon as the door is no longer fully closed
+    if door_open_timer and door_open_timer.is_alive():
+        door_open_timer.cancel()
+        logging.info('Cancelled previous door open timer.')
+
+    logging.info(f'Starting {DOOR_OPEN_TIMEOUT}-second timer for door open notification.')
+    door_open_timer = Timer(DOOR_OPEN_TIMEOUT, send_ntfy_notification)
+    door_open_timer.start()
 
 
 def reed_closed_door_closed():
@@ -323,24 +374,28 @@ def reed_open_door_open():
 
 def reed_open_door_closed():
     global door_open_timer
-    logging.info('Open door reed contact is closed - garage door is open.')
-    if door_open_timer and door_open_timer.is_alive():
-        door_open_timer.cancel()
-        logging.info('Cancelling previous door open timer.')
-
-    logging.info(f'Starting {DOOR_OPEN_TIMEOUT}-second timer for door open notification.')
-    door_open_timer = Timer(DOOR_OPEN_TIMEOUT, send_ntfy_notification)
-    door_open_timer.start()
+    logging.info('Open door reed contact is closed - garage door is fully open.')
     broadcast_hardware_update()
+    
+    # If the door is fully open and the timer is not already running (e.g., system started with door open), start it.
+    if not (door_open_timer and door_open_timer.is_alive()):
+        logging.info(f'Starting {DOOR_OPEN_TIMEOUT}-second timer for door open notification (door already fully open).')
+        door_open_timer = Timer(DOOR_OPEN_TIMEOUT, send_ntfy_notification)
+        door_open_timer.start()
+    else:
+        logging.info('Door is fully open, but timer is already running (started when door began opening).')
 
 
 def send_ntfy_notification(is_test=False):
     global active_close_token
+    if not NTFY_ENABLED: # Check if ntfy is enabled
+        logging.info('ntfy notifications are disabled. Skipping notification.')
+        return
     if not NTFY_TOPIC or NTFY_TOPIC == 'your_ntfy_topic_here':
         logging.error('ntfy topic is not configured in config.ini. Cannot send notification.')
         return
 
-    if is_test or (reed_open_door and reed_open_door.is_pressed):
+    if is_test or (reed_closed_door and not reed_closed_door.is_pressed): # Check if door is NOT fully closed
         title = 'Garagedeur alarm!'
         if is_test:
             title = 'Test: Garagedeur Melding'
@@ -412,19 +467,19 @@ def send_ntfy_notification(is_test=False):
 
 def listen_for_ntfy_commands():
     """Listens to the ntfy topic for remote commands."""
-    global active_close_token
+    global active_close_token, continue_ntfy_listening
     if not NTFY_TOPIC:
         return
 
     # Listen on a separate topic to keep the main topic clean
     control_topic = f"{NTFY_TOPIC}_control"
     logging.info(f"Starting remote command listener on topic: {control_topic}")
-    while continue_reading: # Added continue_reading check here as well
+    while continue_ntfy_listening: # Use the new flag
         try:
             # Listen to the stream for JSON data
             resp = requests.get(f'https://ntfy.sh/{control_topic}/json', stream=True, timeout=60)
             for line in resp.iter_lines():
-                if not continue_reading: # Check again in case continue_reading changed during iter_lines
+                if not continue_ntfy_listening: # Check again in case flag changed during iter_lines
                     break
                 if line:
                     data = json.loads(line)
@@ -494,19 +549,20 @@ def remove_hardware_listener(q):
 
 def _nfc_listening_loop():
     """The main loop for the NFC reader, run in a separate thread."""
-    global last_used_card_user, continue_reading, nfc_reader_active, ntfy_listener_thread
+    global last_used_card_user, continue_reading, nfc_reader_active
     logging.info('Starting NFC reader loop...')
 
     # Check if door is already open upon startup (e.g. after a reboot/update)
-    if reed_open_door and reed_open_door.is_pressed:
-        logging.info("Startup check: Door is detected as open. Resuming notification timer.")
-        reed_open_door_closed()
+    # This will now correctly trigger the timer via reed_closed_door_open if the door is not closed,
+    # or via reed_open_door_closed if it's fully open and timer not started.
+    if reed_closed_door and not reed_closed_door.is_pressed:
+        logging.info("Startup check: Door is detected as not fully closed. Triggering timer logic.")
+        reed_closed_door_open() # This will start the timer
+    elif reed_open_door and reed_open_door.is_pressed:
+        logging.info("Startup check: Door is detected as fully open. Triggering timer logic.")
+        reed_open_door_closed() # This will ensure timer is running if not already
 
-    # Start the remote listener in a background thread if not already running
-    if not ntfy_listener_thread or not ntfy_listener_thread.is_alive():
-        ntfy_listener_thread = threading.Thread(target=listen_for_ntfy_commands, daemon=True)
-        ntfy_listener_thread.start()
-    
+
     reader = MFRC522()
     logging.info('Started NFC reader. Waiting for cards...')
     nfc_reader_active = True
@@ -578,23 +634,19 @@ def stop_nfc_reader():
 
 def stop_listening():
     """Signals all continuous listening loops (NFC, ntfy) to stop."""
-    global continue_reading, nfc_reader_thread, ntfy_listener_thread
+    global continue_reading, nfc_reader_thread
     logging.info("Signaling all listening loops to stop...")
-    continue_reading = False # This will stop both NFC and ntfy loops
-
-    # Wait for NFC reader thread to finish
+    
+    # Signal NFC reader to stop
+    continue_reading = False 
     if nfc_reader_thread and nfc_reader_thread.is_alive():
         logging.info("Waiting for NFC reader thread to terminate...")
         nfc_reader_thread.join(timeout=2)
         if nfc_reader_thread.is_alive():
             logging.warning("NFC reader thread did not terminate gracefully.")
     
-    # Wait for ntfy listener thread to finish
-    if ntfy_listener_thread and ntfy_listener_thread.is_alive():
-        logging.info("Waiting for ntfy listener thread to terminate...")
-        ntfy_listener_thread.join(timeout=2)
-        if ntfy_listener_thread.is_alive():
-            logging.warning("ntfy listener thread did not terminate gracefully.")
+    # Signal ntfy listener to stop
+    stop_ntfy_listener()
     
     logging.info("All listening loops signaled to stop.")
 
@@ -637,7 +689,27 @@ def update_config_items(updates):
     }
     
     updated_any = False
+    ntfy_enabled_changed = False
+    old_ntfy_enabled = config.getboolean('ntfy', 'enabled', fallback=False)
+
+    # Handle checkbox for ntfy.enabled explicitly, as unchecked checkboxes are not sent in form data
+    if 'ntfy.enabled' not in updates and old_ntfy_enabled:
+        config.set('ntfy', 'enabled', 'False')
+        updated_any = True
+        ntfy_enabled_changed = True
+        logging.info("Config updated: [ntfy]enabled = False (checkbox unchecked)")
+    elif 'ntfy.enabled' in updates and not old_ntfy_enabled:
+        # If it's in updates, it means it was checked, and it was previously false
+        config.set('ntfy', 'enabled', 'True')
+        updated_any = True
+        ntfy_enabled_changed = True
+        logging.info("Config updated: [ntfy]enabled = True (checkbox checked)")
+    
+    # Process other updates
     for key_path, new_value in updates.items():
+        if key_path == 'ntfy.enabled': # Already handled
+            continue
+
         if key_path in sensitive_fields:
             logging.warning(f"Attempted to update sensitive field '{key_path}'. Operation blocked.")
             continue
@@ -657,8 +729,17 @@ def update_config_items(updates):
             with open(_CONTROLLER_CONFIG_FILE_PATH, 'w') as configfile:
                 config.write(configfile)
             logging.info("config.ini file successfully updated on disk.")
+            
             # Reload the in-memory config to reflect changes
             load_config(config)
+
+            # Handle ntfy listener state change
+            if ntfy_enabled_changed:
+                if NTFY_ENABLED and not old_ntfy_enabled: # ntfy was disabled, now enabled
+                    start_ntfy_listener()
+                elif not NTFY_ENABLED and old_ntfy_enabled: # ntfy was enabled, now disabled
+                    stop_ntfy_listener()
+
             return True
         except Exception as e:
             logging.error(f"Failed to write config.ini file: {e}")
